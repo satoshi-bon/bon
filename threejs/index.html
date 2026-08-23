@@ -81,12 +81,21 @@ float ridge(float x,float w){return exp(-x*x*w);}
 void main(){
   float t=uTime*uMotion;
   float depth=clamp((-vW.z+1.0)/82.0,0.0,1.0);
-  float broad=sin(vW.z*.105+t*.72 + sin(vW.x*.055+t*.17)*1.7);
-  float mid=sin(vW.z*.205+t*1.18 + vW.x*.09 + sin(vW.z*.045-t*.21));
-  float fine=fbm(vec2(vW.x*.11+t*.035,vW.z*.10+t*.17));
-  float band1=ridge(broad-.18,4.2);
-  float band2=ridge(mid+.30,7.0);
-  float wind=clamp(.72*band1+.42*band2+.25*fine,0.0,1.35);
+  float slow=.52+.48*sin(t*.16-1.1);
+  slow=slow*slow;
+  float pulse=.35+1.35*smoothstep(.18,.92,fbm(vec2(t*.055,3.7)));
+  float tA=t*(.40+.72*slow)*pulse;
+  float tB=t*(.78+.55*(1.0-slow));
+  float tC=t*(1.42+.42*sin(t*.29));
+  float broad=sin(vW.z*.095+tA*.72 + sin(vW.x*.050+t*.13)*2.0);
+  float cross=sin((vW.z*.165+vW.x*.118)+tB*1.06 + sin(vW.x*.032-t*.18)*1.15);
+  float oblique=sin((vW.z*.245-vW.x*.155)+tC*1.10 + sin(vW.z*.038+t*.23)*.9);
+  float fine=fbm(vec2(vW.x*.10+t*.030,vW.z*.095+t*.15));
+  float band1=ridge(broad-.14,3.6);
+  float band2=ridge(cross+.22,5.8);
+  float band3=ridge(oblique-.35,8.5);
+  float overlap=band1*band2 + .65*band2*band3 + .35*band1*band3;
+  float wind=clamp(.62*band1+.48*band2+.28*band3+.38*overlap+.20*fine,0.0,1.65);
   vec3 nearC=vec3(.31,.54,.14);
   vec3 farC=vec3(.67,.75,.39);
   vec3 c=mix(nearC,farC,pow(depth,.68));
@@ -160,23 +169,37 @@ void main(){
   float tone=iSeed.w;
   float t=uTime*uMotion;
 
-  float broad=sin(z0*.105+t*.72 + sin(x0*.055+t*.17)*1.7);
-  float mid=sin(z0*.205+t*1.18 + x0*.09 + sin(z0*.045-t*.21));
-  float narrow=sin(z0*.37+t*1.72 + x0*.18 + seed*4.0);
-  float field=fbm(vec2(x0*.085+t*.028,z0*.09+t*.145));
-  float band1=ridge(broad-.18,4.2);
-  float band2=ridge(mid+.30,7.0);
-  float band3=ridge(narrow-.42,10.0);
-  float envelope=.64*band1+.38*band2+.18*band3;
-  float micro=(fbm(vec2(x0*.21+seed*3.2+t*.06,z0*.19+t*.24))-.5);
-  float wind=clamp(envelope*(.78+.45*field)+.16+.18*micro,0.0,1.45);
+  float slow=.52+.48*sin(t*.16-1.1);
+  slow=slow*slow;
+  float pulse=.35+1.35*smoothstep(.18,.92,fbm(vec2(t*.055,3.7)));
+  float tA=t*(.40+.72*slow)*pulse;
+  float tB=t*(.78+.55*(1.0-slow));
+  float tC=t*(1.42+.42*sin(t*.29));
 
-  vec2 windDir=normalize(vec2(.12 + .24*sin(t*.13+z0*.025),-1.0));
-  float bendAmp=h*(.10+.62*wind)*pow(prog,1.58);
+  float broad=sin(z0*.095+tA*.72 + sin(x0*.050+t*.13)*2.0);
+  float cross=sin((z0*.165+x0*.118)+tB*1.06 + sin(x0*.032-t*.18)*1.15);
+  float oblique=sin((z0*.245-x0*.155)+tC*1.10 + sin(z0*.038+t*.23)*.9 + seed*1.8);
+  float field=fbm(vec2(x0*.082+t*.024,z0*.087+t*.135));
+  float band1=ridge(broad-.14,3.6);
+  float band2=ridge(cross+.22,5.8);
+  float band3=ridge(oblique-.35,8.5);
+  float overlap=band1*band2 + .65*band2*band3 + .35*band1*band3;
+  float micro=(fbm(vec2(x0*.22+seed*3.0+t*.07,z0*.20+t*.28))-.5);
+  float wind=clamp((.62*band1+.48*band2+.28*band3+.42*overlap)*(.78+.42*field)+.12+.18*micro,0.0,1.75);
+
+  vec2 dirA=normalize(vec2(.06+.22*sin(t*.12+z0*.021),-1.0));
+  vec2 dirB=normalize(vec2(.58+.18*sin(t*.17+x0*.018),-.82));
+  vec2 dirC=normalize(vec2(-.46+.16*sin(t*.21-z0*.016),-.89));
+  vec2 windVec=dirA*(.62*band1)+dirB*(.48*band2)+dirC*(.32*band3);
+  windVec+=normalize(dirA+dirB+dirC)*(.38*overlap);
+  windVec+=vec2(micro*.15,-.05);
+  vec2 windDir=normalize(windVec+vec2(.001,-.001));
+
+  float bendAmp=h*(.085+.66*wind)*pow(prog,1.58);
   vec3 wp=vec3(x0,prog*h,z0);
   wp.xz+=windDir*bendAmp;
   wp.x+=lean*h*prog*prog;
-  wp.y-=h*(.03+.15*wind)*pow(prog,2.15);
+  wp.y-=h*(.026+.17*wind)*pow(prog,2.12);
 
   float taper=pow(1.0-prog,.76);
   vec2 sideDir=normalize(vec2(cos(yaw)*.45+.66,sin(yaw)*.45));
