@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Architectural Informatics Lab. — Three.js GLSL Meadow</title>
+<style>
+:root{--sky0:#c7e8f7;--sky1:#edf7fa;--sky2:#fbfdfb;--muted:rgba(255,255,255,.80)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#dceef3}body{font-family:Inter,"Helvetica Neue",Arial,"Hiragino Sans","Yu Gothic",sans-serif}
+#hero{position:relative;width:100%;height:100svh;min-height:560px;max-height:920px;overflow:hidden;isolation:isolate;background:radial-gradient(circle at 76% 18%,rgba(255,255,255,.90),rgba(255,255,255,0) 30%),radial-gradient(circle at 15% 12%,rgba(255,255,255,.46),rgba(255,255,255,0) 27%),linear-gradient(to bottom,var(--sky0) 0%,var(--sky1) 45%,var(--sky2) 61%,#eef5df 62%,#aacb68 100%)}
+#hero:after{content:"";position:absolute;left:0;right:0;top:55%;height:16%;z-index:1;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.55) 42%,rgba(255,255,255,0));filter:blur(10px)}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:2}.copy{position:absolute;left:clamp(24px,4.8vw,78px);top:clamp(28px,7vh,86px);z-index:4;color:#fff;pointer-events:none;max-width:min(650px,84vw)}
+.kicker{margin:0 0 16px;font-size:clamp(10px,1vw,13px);font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}h1{margin:0 0 17px;font-size:clamp(34px,6.2vw,84px);line-height:.93;font-weight:620;letter-spacing:-.035em;text-shadow:0 8px 28px rgba(31,52,41,.10)}.sub{margin:0;font-size:clamp(12px,1.22vw,17px);line-height:1.7;letter-spacing:.02em;color:rgba(255,255,255,.84);text-shadow:0 4px 16px rgba(31,52,41,.08)}
+.tech{position:absolute;right:clamp(16px,2.6vw,32px);bottom:clamp(16px,2.4vw,26px);z-index:4;padding:8px 11px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.08);backdrop-filter:blur(9px);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.66);pointer-events:none}
+#error{display:none;position:absolute;inset:0;z-index:9;align-items:center;justify-content:center;padding:28px;text-align:center;color:#52645a;background:linear-gradient(#d3edf7,#f7fbf7 60%,#a9ca69)}
+@media(max-width:760px){#hero{min-height:620px}.copy{top:32px;max-width:88vw}.tech{display:none}}
+</style>
+</head>
+<body>
+<main id="hero" aria-label="Three.js、WebGL、GLSLシェーダー、GPUインスタンシングで手前から奥へ伝わる風を表現した草原">
+<canvas id="webgl"></canvas>
+<section class="copy"><p class="kicker">Architectural Informatics Lab.</p><h1>Wide horizon.<br>Living field.</h1><p class="sub">Yamada Satoshi Lab. / Ritsumeikan University</p></section>
+<div class="tech">Three.js · WebGL · GLSL · GPU instancing</div><div id="error">Three.js の読み込み、または WebGL の初期化に失敗しました。</div>
+</main>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js';
+
+const hero=document.getElementById('hero');
+const canvas=document.getElementById('webgl');
+const errorBox=document.getElementById('error');
+const mobile=matchMedia('(max-width:760px)').matches;
+const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const MAX_GUSTS=6;
+
+let renderer;
+try{
+ renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance',premultipliedAlpha:false});
+}catch(e){errorBox.style.display='flex';throw e;}
+renderer.setClearColor(0x000000,0);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.35:1.75));
+
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(42,1,.05,120);
+camera.position.set(0,2.65,6.5);camera.lookAt(0,.45,-37);
+
+const gustA=Array.from({length:MAX_GUSTS},()=>new THREE.Vector4());
+const gustB=Array.from({length:MAX_GUSTS},()=>new THREE.Vector4());
+const gustUniforms={uTime:{value:0},uGustA:{value:gustA},uGustB:{value:gustB}};
+const gusts=Array.from({length:MAX_GUSTS},()=>({}));
+function resetGust(g,initial=false){g.x=(Math.random()-.5)*24;g.z=initial?(7-Math.random()*82):(7+Math.random()*5);g.width=3.8+Math.random()*8.2;g.strength=.35+Math.random()*.85;g.lateral=(Math.random()-.5)*.55;g.speed=4.0+Math.random()*7.5;g.phase=Math.random()*Math.PI*2;g.turb=.18+Math.random()*.75}
+gusts.forEach(g=>resetGust(g,true));
+function updateGusts(dt){gusts.forEach((g,i)=>{g.z-=g.speed*dt;if(g.z<-78)resetGust(g,false);gustA[i].set(g.x,g.z,g.width,g.strength);gustB[i].set(g.lateral,g.speed,g.phase,g.turb);});}
+
+const groundVS=`
+varying vec3 vW;
+void main(){vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`;
+const groundFS=`
+precision highp float;varying vec3 vW;uniform float uTime;uniform vec4 uGustA[${MAX_GUSTS}];uniform vec4 uGustB[${MAX_GUSTS}];
+float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+void main(){float depth=clamp((-vW.z+3.0)/78.0,0.,1.);vec3 c=mix(vec3(.39,.63,.20),vec3(.68,.78,.42),depth);float gust=0.;for(int i=0;i<${MAX_GUSTS};i++){vec4 a=uGustA[i];vec2 d=vec2((vW.x-a.x)/a.z,(vW.z-a.y)/(a.z*1.7));float inf=exp(-dot(d,d)*1.25);float irr=.72+.18*sin(uTime*(.65+uGustB[i].w)+uGustB[i].z+vW.x*.18+vW.z*.10);gust+=inf*a.w*irr;}float tex=n(vW.xz*.17+vec2(uTime*.014,-uTime*.025));c+=vec3(.035,.055,.012)*(tex-.45);c+=vec3(.09,.105,.025)*min(gust,1.2);float fog=smoothstep(.55,1.,depth);c=mix(c,vec3(.84,.91,.86),fog*.76);gl_FragColor=vec4(c,1.);}`;
+const groundMat=new THREE.ShaderMaterial({uniforms:gustUniforms,vertexShader:groundVS,fragmentShader:groundFS});
+const groundGeo=new THREE.PlaneGeometry(88,90,1,1);groundGeo.rotateX(-Math.PI/2);groundGeo.translate(0,0,-37);scene.add(new THREE.Mesh(groundGeo,groundMat));
+
+const segments=5,basePos=[],baseIdx=[];
+for(let s=0;s<=segments;s++){const y=s/segments;basePos.push(-.5,y,0,.5,y,0)}
+for(let s=0;s<segments;s++){const a=s*2,b=a+1,c=a+2,d=a+3;baseIdx.push(a,b,c,b,d,c)}
+const grassGeo=new THREE.InstancedBufferGeometry();grassGeo.setAttribute('position',new THREE.Float32BufferAttribute(basePos,3));grassGeo.setIndex(baseIdx);
+const bladeCount=mobile?13000:28000,instA=new Float32Array(bladeCount*4),instB=new Float32Array(bladeCount*4);
+for(let i=0;i<bladeCount;i++){const depth=Math.pow(Math.random(),.72),z=5-depth*78,spread=10+depth*34,x=(Math.random()-.5)*spread*2,h=.16+Math.random()*.42+(1-depth)*.08,w=.010+Math.random()*.015,o=i*4;instA[o]=x;instA[o+1]=z;instA[o+2]=h;instA[o+3]=w;instB[o]=Math.random();instB[o+1]=Math.random();instB[o+2]=Math.random();instB[o+3]=Math.random();}
+grassGeo.setAttribute('iXZHW',new THREE.InstancedBufferAttribute(instA,4));grassGeo.setAttribute('iSeedHueLean',new THREE.InstancedBufferAttribute(instB,4));grassGeo.instanceCount=bladeCount;
+const grassVS=`
+precision highp float;attribute vec4 iXZHW;attribute vec4 iSeedHueLean;uniform float uTime;uniform vec4 uGustA[${MAX_GUSTS}];uniform vec4 uGustB[${MAX_GUSTS}];varying float vDepth;varying float vProg;varying float vWind;varying float vHue;varying float vTone;
+float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);return mix(mix(hash21(i),hash21(i+vec2(1,0)),f.x),mix(hash21(i+vec2(0,1)),hash21(i+vec2(1,1)),f.x),f.y);}float fbm(vec2 p){float s=0.0,a=.5;for(int k=0;k<4;k++){s+=a*n2(p);p=p*2.03+17.1;a*=.5;}return s;}
+void main(){float prog=position.y,side=position.x*2.0,x0=iXZHW.x,z0=iXZHW.y,h=iXZHW.z,w=iXZHW.w,seed=iSeedHueLean.x,yaw=iSeedHueLean.y*6.2831853,lean=(iSeedHueLean.z-.5)*.23,hue=iSeedHueLean.w;vec3 wp=vec3(x0,prog*h,z0);float taper=pow(1.0-prog,.72);vec2 sideDir=normalize(vec2(cos(yaw)*.38+.72,sin(yaw)*.38));wp.xz+=sideDir*side*w*taper;vec2 wind=vec2(0.0);float e=0.0;for(int i=0;i<${MAX_GUSTS};i++){vec4 a=uGustA[i],b=uGustB[i];vec2 d=vec2((x0-a.x)/a.z,(z0-a.y)/(a.z*1.65));float inf=exp(-dot(d,d)*1.55);float irr=.68+.20*sin(uTime*(.68+b.w)+b.z+x0*.21+z0*.13+seed*5.1)+.12*sin(uTime*(1.13+b.w*.6)+b.z*1.7+z0*.39);float s=inf*a.w*irr;wind+=normalize(vec2(b.x,-1.0))*s;e+=s;}float amb=(fbm(vec2(x0*.10+uTime*.025,z0*.095-uTime*.045)+seed*2.0)-.5);wind+=vec2(amb*.24,-.04-abs(amb)*.04);float bend=(.055+e*.34+abs(amb)*.06)*h*pow(prog,1.72);wp.xz+=wind*bend;wp.x+=lean*h*prog*prog;vDepth=clamp((-z0+3.0)/76.0,0.0,1.0);vProg=prog;vWind=clamp(e,0.0,1.6);vHue=hue;vTone=hash21(vec2(x0,z0));gl_Position=projectionMatrix*viewMatrix*vec4(wp,1.0);}`;
+const grassFS=`
+precision highp float;varying float vDepth;varying float vProg;varying float vWind;varying float vHue;varying float vTone;void main(){vec3 nearC=vec3(.29,.56,.19),midC=vec3(.43,.68,.27),farC=vec3(.66,.78,.43);vec3 c=mix(nearC,midC,.45+vTone*.25);c=mix(c,farC,smoothstep(.38,1.0,vDepth));c+=vec3(.07,.085,.025)*vWind;c=mix(c,vec3(.78,.88,.83),smoothstep(.72,1.0,vDepth)*.72);c+=vec3(.035,.045,.012)*vProg;float a=mix(.94,.34,smoothstep(.56,1.0,vDepth));gl_FragColor=vec4(c,a);}`;
+const grassMat=new THREE.ShaderMaterial({uniforms:gustUniforms,vertexShader:grassVS,fragmentShader:grassFS,transparent:true,depthWrite:true,side:THREE.DoubleSide});
+const grassMesh=new THREE.Mesh(grassGeo,grassMat);grassMesh.frustumCulled=false;scene.add(grassMesh);
+
+const centers=[[-10,-15],[-4,-27],[5,-36],[11,-51]],colors=[[.93,.38,.60],[.94,.80,.32],[.35,.70,.68],[.72,.54,.88],[.95,.63,.34]],agentCount=mobile?110:220,agents=[],positions=new Float32Array(agentCount*3),colSize=new Float32Array(agentCount*4);
+for(let i=0;i<agentCount;i++){const ci=i%centers.length,c=centers[ci],a=Math.random()*Math.PI*2,r=Math.pow(Math.random(),.7)*(1.5+Math.random()*3),x=c[0]+Math.cos(a)*r,z=c[1]+Math.sin(a)*r*1.7,y=.18+Math.random()*.78;agents.push({x,y,z,vx:0,vy:0,vz:0,ci,seed:Math.random()*20,phase:Math.random()*Math.PI*2});const co=colors[i%colors.length],o=i*4;colSize[o]=co[0];colSize[o+1]=co[1];colSize[o+2]=co[2];colSize[o+3]=3.5+Math.random()*5.0;}
+const ptsGeo=new THREE.BufferGeometry();const posAttr=new THREE.BufferAttribute(positions,3).setUsage(THREE.DynamicDrawUsage);ptsGeo.setAttribute('position',posAttr);ptsGeo.setAttribute('aColorSize',new THREE.BufferAttribute(colSize,4));
+const pointVS=`attribute vec4 aColorSize;varying vec4 vColor;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);gl_Position=projectionMatrix*mv;gl_PointSize=clamp(aColorSize.w*(18.0/max(.4,-mv.z)),1.5,9.0);vColor=vec4(aColorSize.rgb,.24);}`;
+const pointFS=`precision highp float;varying vec4 vColor;void main(){vec2 p=gl_PointCoord-.5;float r=length(p),a=atan(p.y,p.x),edge=.20+.055*cos(4.*a);float mask=1.-smoothstep(edge-.035,edge+.025,r),center=1.-smoothstep(.03,.13,r),alpha=(mask*.62+center*.24)*vColor.a;if(alpha<.012)discard;gl_FragColor=vec4(vColor.rgb,alpha);}`;
+const ptsMat=new THREE.ShaderMaterial({vertexShader:pointVS,fragmentShader:pointFS,transparent:true,depthWrite:false,blending:THREE.NormalBlending});scene.add(new THREE.Points(ptsGeo,ptsMat));
+
+let pointerX=0,last=performance.now();hero.addEventListener('pointermove',e=>{const r=hero.getBoundingClientRect();pointerX=((e.clientX-r.left)/r.width-.5)*2});hero.addEventListener('pointerleave',()=>pointerX=0);
+function updateAgents(t,dt){for(let i=0;i<agentCount;i++){const a=agents[i],base=centers[a.ci],cx=base[0]+Math.sin(t*.00023+a.phase)*1.8,cz=base[1]+Math.cos(t*.00017+a.phase*1.7)*2.6;let ax=(cx-a.x)*.08,az=(cz-a.z)*.05,ay=(.42+Math.sin(t*.00033+a.seed)*.22-a.y)*.06;ax+=Math.sin(t*.00071+a.seed+a.z*.09)*.12;az+=Math.cos(t*.00061+a.seed+a.x*.14)*.16;ax+=pointerX*.025;a.vx=(a.vx+ax*dt)*.95;a.vz=(a.vz+az*dt)*.95;a.vy=(a.vy+ay*dt)*.94;a.x+=a.vx;a.z+=a.vz;a.y+=a.vy;const o=i*3;positions[o]=a.x;positions[o+1]=a.y;positions[o+2]=a.z;}posAttr.needsUpdate=true;}
+function resize(){const r=hero.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(hero);resize();
+function animate(now){const dt=Math.min(.04,(now-last)/1000);last=now;updateGusts(dt);gustUniforms.uTime.value=now/1000;groundMat.uniforms.uTime.value=gustUniforms.uTime.value;grassMat.uniforms.uTime.value=gustUniforms.uTime.value;updateAgents(now,dt);renderer.render(scene,camera);if(!reduced)requestAnimationFrame(animate);}
+if(reduced){updateGusts(0);updateAgents(0,0);renderer.render(scene,camera);}else requestAnimationFrame(animate);
+</script>
+</body>
+</html>
