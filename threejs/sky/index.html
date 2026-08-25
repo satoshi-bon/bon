@@ -1,0 +1,226 @@
+<!doctype html>
+<!-- Living Field branch: skyborne / from v05 -->
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Architectural Informatics Lab. — Skyborne Branch</title>
+<style>
+:root{--ink:rgba(255,255,255,.94);--muted:rgba(255,255,255,.72)}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#cfe1ec}
+body{font-family:Inter,"Helvetica Neue",Arial,"Hiragino Sans","Yu Gothic",sans-serif}
+#hero{position:relative;width:100%;height:100svh;min-height:560px;overflow:hidden;isolation:isolate;background:linear-gradient(to bottom,#94bed7 0%,#bdd7e6 28%,#e4edf0 58%,#eef0e9 72%,#b5c887 86%,#789649 100%)}
+#hero::before{content:"";position:absolute;inset:-12%;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 72% 14%,rgba(255,255,255,.66) 0%,rgba(255,255,255,.18) 19%,rgba(255,255,255,0) 43%),radial-gradient(ellipse at 19% 43%,rgba(255,255,255,.19),rgba(255,255,255,0) 34%),linear-gradient(to bottom,rgba(255,255,255,.04),rgba(255,255,255,0) 48%,rgba(255,255,255,.16) 72%,rgba(255,255,255,0));filter:blur(2px)}
+#hero::after{content:"";position:absolute;left:-8%;right:-8%;top:67%;height:16%;z-index:1;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.47) 45%,rgba(255,255,255,0));filter:blur(22px)}
+.air{position:absolute;inset:-18%;z-index:1;pointer-events:none;opacity:.72;filter:blur(26px);background:radial-gradient(ellipse at 16% 38%,rgba(255,255,255,.16),rgba(255,255,255,0) 29%),radial-gradient(ellipse at 56% 50%,rgba(255,255,255,.11),rgba(255,255,255,0) 33%),radial-gradient(ellipse at 86% 28%,rgba(255,255,255,.13),rgba(255,255,255,0) 28%);animation:airDrift 22s ease-in-out infinite alternate}
+@keyframes airDrift{0%{transform:translate3d(-2.5%,2%,0) scale(1.02)}45%{transform:translate3d(2%,-1%,0) scale(1.06)}100%{transform:translate3d(5%,-3%,0) scale(1.02)}}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:2}
+.copy{position:absolute;left:clamp(28px,4.8vw,78px);top:clamp(36px,7vh,84px);z-index:4;color:var(--ink);pointer-events:none;max-width:min(700px,84vw)}
+.kicker{margin:0 0 16px;font-size:clamp(10px,1vw,13px);font-weight:700;letter-spacing:.19em;text-transform:uppercase;color:var(--muted)}
+h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:610;letter-spacing:-.045em;text-shadow:0 8px 28px rgba(33,55,70,.08)}
+.sub{margin:0;font-size:clamp(12px,1.18vw,17px);line-height:1.7;letter-spacing:.02em;color:rgba(255,255,255,.78);text-shadow:0 4px 12px rgba(31,52,65,.06)}
+.branch{position:absolute;right:clamp(16px,2.6vw,32px);top:clamp(14px,2.2vw,28px);z-index:5;padding:8px 11px;border:1px solid rgba(255,255,255,.34);border-radius:999px;background:rgba(255,255,255,.13);backdrop-filter:blur(9px);font-size:10px;font-weight:750;letter-spacing:.11em;color:rgba(255,255,255,.94);pointer-events:none}
+.change{position:absolute;right:clamp(16px,2.6vw,32px);top:clamp(51px,5.1vw,66px);z-index:5;max-width:min(460px,74vw);font-size:9px;font-weight:650;line-height:1.55;letter-spacing:.09em;text-align:right;color:rgba(255,255,255,.75);text-shadow:0 2px 8px rgba(30,50,60,.10);pointer-events:none}
+.tech{position:absolute;right:clamp(16px,2.6vw,32px);bottom:clamp(16px,2.4vw,26px);z-index:4;padding:8px 11px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.05);backdrop-filter:blur(8px);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);pointer-events:none}
+#error{display:none;position:absolute;inset:0;z-index:9;align-items:center;justify-content:center;padding:28px;text-align:center;color:#52645a;background:linear-gradient(#c7e0ed,#f7fbf7 70%,#a8bd77)}
+@media(max-width:760px){.copy{top:34px;max-width:88vw}.copy h1{margin-top:4px}.tech{display:none}.branch{top:14px;right:14px;font-size:8px;padding:7px 9px}.change{top:47px;right:14px;font-size:7px;max-width:64vw}.air{opacity:.58}}
+@media(prefers-reduced-motion:reduce){.air{animation:none}}
+</style>
+</head>
+<body>
+<main id="hero" aria-label="広い空と遠い草原。風に運ばれる、種とも紙片とも断定できない小さなものが、奥行きをもって空を横切る分岐案">
+  <div class="air"></div>
+  <canvas id="webgl"></canvas>
+  <section class="copy">
+    <p class="kicker">Architectural Informatics Lab.</p>
+    <h1>Wide sky.<br>Moving air.</h1>
+    <p class="sub">Yamada Satoshi Lab. / Ritsumeikan University</p>
+  </section>
+  <div class="branch">BRANCH · 空と風に舞う何か · from v05</div>
+  <div class="change">草原主体から分岐 ／ 空の比率を拡張 ／ 正体を限定しない飛翔体 ／ 風は軌跡ではなく群れの運動で見せる</div>
+  <div class="tech">Three.js · instanced flutter · skyborne 01</div>
+  <div id="error">WebGL の初期化に失敗しました。</div>
+</main>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js';
+
+const canvas=document.getElementById('webgl');
+const errorBox=document.getElementById('error');
+const mobile=matchMedia('(max-width:760px)').matches;
+const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+let renderer;
+try{
+  renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance',premultipliedAlpha:false});
+}catch(e){errorBox.style.display='flex';throw e;}
+renderer.setClearColor(0x000000,0);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.25:1.7));
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0xdce8ea,.0155);
+const camera=new THREE.PerspectiveCamera(39,1,.05,120);
+camera.position.set(0,2.2,10.8);
+camera.lookAt(0,2.8,-25);
+
+// A very low horizon keeps a memory of v05, while the sky becomes dominant.
+const ground=new THREE.Mesh(
+  new THREE.PlaneGeometry(180,150),
+  new THREE.MeshBasicMaterial({color:0x8ca45b,transparent:true,opacity:.27,depthWrite:false})
+);
+ground.rotation.x=-Math.PI/2;
+ground.position.set(0,-1.72,-35);
+scene.add(ground);
+
+const horizon=new THREE.Mesh(
+  new THREE.PlaneGeometry(160,9),
+  new THREE.MeshBasicMaterial({color:0xe8eee7,transparent:true,opacity:.14,depthWrite:false,side:THREE.DoubleSide})
+);
+horizon.position.set(0,-.55,-54);
+scene.add(horizon);
+
+// Irregular, deliberately unclassified fragments: not explicitly leaves, petals, paper, or seeds.
+const fragGeom=new THREE.BufferGeometry();
+fragGeom.setAttribute('position',new THREE.Float32BufferAttribute([
+  -.11,-.03,.00,   -.035,.26,.018,   .10,.055,-.012,
+  -.11,-.03,.00,    .10,.055,-.012,  .018,-.22,.014
+],3));
+fragGeom.computeVertexNormals();
+
+const fragMat=new THREE.MeshBasicMaterial({
+  color:0xf4efdf,
+  vertexColors:true,
+  transparent:true,
+  opacity:.72,
+  side:THREE.DoubleSide,
+  depthWrite:false,
+  fog:true
+});
+const COUNT=mobile?190:360;
+const fragments=new THREE.InstancedMesh(fragGeom,fragMat,COUNT);
+fragments.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+scene.add(fragments);
+
+const palette=[0xf7f3e8,0xe8eadf,0xded9c6,0xf2ead3,0xdbe5df];
+const dummy=new THREE.Object3D();
+const items=[];
+function rand(a,b){return a+Math.random()*(b-a)}
+function resetItem(it,initial=false){
+  it.x=initial?rand(-19,19):rand(-21,-17);
+  it.y=rand(-.4,10.4);
+  it.z=rand(-4,-52);
+  it.base=rand(.34,1.08)*(it.z>-17?1.05:.90);
+  it.speed=rand(.48,1.38)*(1+THREE.MathUtils.clamp((52+it.z)/60,0,.55));
+  it.lift=rand(-.035,.085);
+  it.phase=rand(0,Math.PI*2);
+  it.phase2=rand(0,Math.PI*2);
+  it.spin=rand(-1.8,1.8);
+  it.tumble=rand(.55,1.75);
+  it.lane=rand(.65,1.35);
+}
+for(let i=0;i<COUNT;i++){
+  const it={};resetItem(it,true);items.push(it);
+  fragments.setColorAt(i,new THREE.Color(palette[(Math.random()*palette.length)|0]));
+}
+fragments.instanceColor.needsUpdate=true;
+
+// Fine specks make the depth of the air readable without drawing wind lines.
+const DUST=mobile?220:520;
+const dustPos=new Float32Array(DUST*3);
+const dustState=[];
+function resetDust(d,initial=false){
+  d.x=initial?rand(-20,20):rand(-21,-18);
+  d.y=rand(-.2,10.7);
+  d.z=rand(-7,-58);
+  d.speed=rand(.22,.72);
+  d.phase=rand(0,Math.PI*2);
+}
+for(let i=0;i<DUST;i++){
+  const d={};resetDust(d,true);dustState.push(d);
+  dustPos[i*3]=d.x;dustPos[i*3+1]=d.y;dustPos[i*3+2]=d.z;
+}
+const dustGeom=new THREE.BufferGeometry();
+dustGeom.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
+const dust=new THREE.Points(dustGeom,new THREE.PointsMaterial({
+  color:0xffffff,size:mobile?.035:.045,sizeAttenuation:true,transparent:true,opacity:.34,depthWrite:false,fog:true
+}));
+scene.add(dust);
+
+let last=performance.now();
+let elapsed=0;
+let pointerX=0,pointerY=0;
+addEventListener('pointermove',e=>{
+  pointerX=(e.clientX/innerWidth-.5)*2;
+  pointerY=(e.clientY/innerHeight-.5)*2;
+},{passive:true});
+
+function smoothstep(a,b,x){const t=THREE.MathUtils.clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)}
+function updateFragments(dt,t){
+  // Coherent gust envelopes. Their overlap creates occasional stronger flows without visible wind streaks.
+  const g1=.5+.5*Math.sin(t*.31);
+  const g2=.5+.5*Math.sin(t*.17+1.9);
+  const gust=.72+.34*smoothstep(.55,1,g1)+.18*smoothstep(.72,1,g2);
+  const motion=reduced?.23:1;
+  for(let i=0;i<COUNT;i++){
+    const it=items[i];
+    const local=Math.sin(t*.66+it.phase)+.46*Math.sin(t*1.13+it.phase2);
+    const cross=Math.sin(t*.23+it.phase2)*.10+Math.sin(it.z*.19+t*.16)*.055;
+    it.x+=(1.02*it.speed*gust+local*.055)*dt*motion;
+    it.y+=(it.lift+cross)*dt*motion;
+    if(it.x>20.5||it.y>11.5||it.y<-1.1)resetItem(it,false);
+
+    const flutter=Math.sin(t*it.tumble*2.3+it.phase);
+    const scalePulse=1+flutter*.08;
+    dummy.position.set(it.x,it.y,it.z);
+    dummy.rotation.set(
+      Math.sin(t*.72+it.phase2)*.78,
+      t*it.spin*.58+it.phase,
+      flutter*1.18+Math.sin(t*.39+it.phase2)*.32
+    );
+    const sx=it.base*(.62+.24*Math.sin(it.phase2));
+    const sy=it.base*(1.05+.22*Math.sin(it.phase));
+    dummy.scale.set(sx*scalePulse,sy*scalePulse,1);
+    dummy.updateMatrix();
+    fragments.setMatrixAt(i,dummy.matrix);
+  }
+  fragments.instanceMatrix.needsUpdate=true;
+}
+function updateDust(dt,t){
+  const arr=dustGeom.attributes.position.array;
+  const motion=reduced?.22:1;
+  const gust=.76+.24*(.5+.5*Math.sin(t*.27+2.1));
+  for(let i=0;i<DUST;i++){
+    const d=dustState[i];
+    d.x+=(d.speed*gust+.025*Math.sin(t*.9+d.phase))*dt*motion;
+    d.y+=Math.sin(t*.34+d.phase)*.012*dt*motion;
+    if(d.x>21)resetDust(d,false);
+    arr[i*3]=d.x;arr[i*3+1]=d.y;arr[i*3+2]=d.z;
+  }
+  dustGeom.attributes.position.needsUpdate=true;
+}
+function resize(){
+  const w=innerWidth,h=innerHeight;
+  renderer.setSize(w,h,false);
+  camera.aspect=w/h;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize,{passive:true});
+resize();
+
+function frame(now){
+  const dt=Math.min(.035,(now-last)/1000||0);last=now;elapsed+=dt;
+  updateFragments(dt,elapsed);
+  updateDust(dt,elapsed);
+  const parallax=reduced?0:1;
+  camera.position.x+=(pointerX*.18*parallax-camera.position.x)*Math.min(1,dt*1.5);
+  camera.position.y+=(2.2-pointerY*.08*parallax-camera.position.y)*Math.min(1,dt*1.5);
+  camera.lookAt(camera.position.x*.08,2.75,-25);
+  renderer.render(scene,camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
