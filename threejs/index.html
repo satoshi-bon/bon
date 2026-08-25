@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- Living Field v01 -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -27,14 +28,14 @@ h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:
 </style>
 </head>
 <body>
-<main id="hero" aria-label="広い地平線と風の層に加えて、たまに突風とつむじ風が走る草原">
+<main id="hero" aria-label="広い地平線に複数方向の風が重なり、たまに突風とつむじ風が走る草原">
   <canvas id="webgl"></canvas>
   <section class="copy">
     <p class="kicker">Architectural Informatics Lab.</p>
     <h1>Wide horizon.<br>Living field.</h1>
     <p class="sub">Yamada Satoshi Lab. / Ritsumeikan University</p>
   </section>
-  <div class="tech">Three.js · GLSL · instanced meadow</div>
+  <div class="tech">Three.js · GLSL · instanced meadow · v01</div>
   <div id="error">WebGL の初期化に失敗しました。</div>
 </main>
 <script type="module">
@@ -172,10 +173,13 @@ void main(){
   float t=uTime*uMotion;
   float depth=clamp((-vW.z+2.0)/96.0,0.0,1.0);
   float broad=sin(vW.z*.086+t*.58 + sin(vW.x*.032+t*.10)*1.55);
-  float cross=sin((vW.z*.152+vW.x*.078)+t*.81);
+  float cross=sin((vW.z*.150+vW.x*.088)+t*.82 + sin(vW.x*.028-t*.12)*.72);
+  float oblique=sin((vW.z*.214-vW.x*.126)+t*1.06 + sin(vW.z*.030+t*.16)*.62);
   float fine=fbm(vec2(vW.x*.065+t*.018,vW.z*.058+t*.09));
   float band1=ridge(broad-.12,4.2);
-  float band2=ridge(cross+.18,7.2);
+  float band2=ridge(cross+.18,7.0);
+  float band3=ridge(oblique-.30,8.4);
+  float overlap=band1*band2 + .62*band2*band3 + .36*band1*band3;
   float packet=0.0;
   for(int i=0;i<${MAX_PACKETS};i++){
     vec4 a=uPacketA[i];
@@ -196,7 +200,7 @@ void main(){
     float pulse=.20 + 0.95*pow(max(0.0,sin(t*.92 + uWhirlB[i].y + float(i)*2.1)),2.8);
     whirl += (core*0.55 + ring*0.65) * a.w * pulse;
   }
-  float wind=clamp(.56*band1+.20*band2+.12*fine+packet*.60+whirl*.34,0.0,1.75);
+  float wind=clamp(.52*band1+.25*band2+.17*band3+.24*overlap+.11*fine+packet*.60+whirl*.34,0.0,1.82);
   vec3 nearC=vec3(.40,.58,.20);
   vec3 midC=vec3(.57,.71,.30);
   vec3 farC=vec3(.72,.80,.48);
@@ -279,12 +283,15 @@ void main(){
   float t=uTime*uMotion;
 
   float broad=sin(z0*.086+t*.58 + sin(x0*.032+t*.10)*1.55);
-  float cross=sin((z0*.152+x0*.078)+t*.81 + seed*1.2);
-  float ripple=sin(z0*.26+t*1.18 + x0*.07 + seed*3.7);
+  float cross=sin((z0*.150+x0*.088)+t*.82 + sin(x0*.028-t*.12)*.72 + seed*.52);
+  float oblique=sin((z0*.214-x0*.126)+t*1.06 + sin(z0*.030+t*.16)*.62 + seed*.94);
+  float ripple=sin(z0*.31+t*1.34 + x0*.052 + seed*3.7);
   float field=fbm(vec2(x0*.065+t*.018,z0*.058+t*.09));
   float band1=ridge(broad-.12,4.2);
-  float band2=ridge(cross+.18,7.2);
-  float band3=ridge(ripple-.34,10.0);
+  float band2=ridge(cross+.18,7.0);
+  float band3=ridge(oblique-.30,8.4);
+  float band4=ridge(ripple-.34,10.0);
+  float overlap=band1*band2 + .62*band2*band3 + .36*band1*band3;
 
   float packetWind=0.0;
   vec2 packetDir=vec2(0.0);
@@ -318,10 +325,15 @@ void main(){
   }
 
   float micro=(fbm(vec2(x0*.18+seed*2.8+t*.05,z0*.15+t*.18))-.5);
-  float wind=clamp((.56*band1+.18*band2+.08*band3)*(.9+.22*field)+.08+.10*micro+packetWind*.60+whirlWind*.36,0.0,1.9);
-  vec2 baseDir=normalize(vec2(.02+.10*sin(t*.12+z0*.016),-1.0));
-  vec2 crossDir=vec2(sign(cross)*0.20,-0.12);
-  vec2 dirMix=baseDir + crossDir*(.12+.18*band2) + packetDir*.42 + whirlDir*.34 + vec2(micro*.06,0.0);
+  float wind=clamp((.50*band1+.25*band2+.18*band3+.06*band4+.26*overlap)*(.9+.22*field)+.08+.10*micro+packetWind*.60+whirlWind*.36,0.0,1.95);
+
+  vec2 dirA=normalize(vec2(.08+.16*sin(t*.10+z0*.012),-1.0));
+  vec2 dirB=normalize(vec2(.64+.12*sin(t*.13+x0*.014+1.2),-.77));
+  vec2 dirC=normalize(vec2(-.56+.14*sin(t*.16-z0*.011+2.4),-.83));
+  vec2 baseDir=normalize(dirA*.58+dirB*.24+dirC*.18);
+  vec2 layerDir=dirA*(.54*band1)+dirB*(.42*band2)+dirC*(.36*band3);
+  vec2 overlapDir=normalize(dirA+dirB+dirC)*(.30*overlap);
+  vec2 dirMix=baseDir*.46 + layerDir + overlapDir + packetDir*.42 + whirlDir*.34 + vec2(micro*.06,0.0);
   vec2 windDir=dirMix / max(length(dirMix),1e-4);
 
   float bendAmp=h*(.045+.36*wind)*pow(prog,1.55);
