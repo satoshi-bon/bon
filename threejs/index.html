@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Living Field v03 -->
+<!-- Living Field v04 -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -11,11 +11,8 @@
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d7e8f1}
 body{font-family:Inter,"Helvetica Neue",Arial,"Hiragino Sans","Yu Gothic",sans-serif}
-#hero{position:relative;width:100%;height:100svh;min-height:560px;overflow:hidden;isolation:isolate;background:
-linear-gradient(to bottom,#b9d8ea 0%,#d9e9f2 24%,#f0f3f2 51%,#f5f4ef 61%,#c9d98d 72%,#89ab49 100%)}
-#hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:
-radial-gradient(circle at 68% 16%,rgba(255,255,255,.70),rgba(255,255,255,0) 28%),
-linear-gradient(to bottom,rgba(255,255,255,.06),rgba(255,255,255,0) 26%,rgba(255,255,255,.08) 58%,rgba(255,255,255,.02));}
+#hero{position:relative;width:100%;height:100svh;min-height:560px;overflow:hidden;isolation:isolate;background:linear-gradient(to bottom,#b9d8ea 0%,#d9e9f2 24%,#f0f3f2 51%,#f5f4ef 61%,#c9d98d 72%,#89ab49 100%)}
+#hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(circle at 68% 16%,rgba(255,255,255,.70),rgba(255,255,255,0) 28%),linear-gradient(to bottom,rgba(255,255,255,.06),rgba(255,255,255,0) 26%,rgba(255,255,255,.08) 58%,rgba(255,255,255,.02))}
 #hero::after{content:"";position:absolute;left:-8%;right:-8%;top:59%;height:15%;z-index:1;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.56) 48%,rgba(255,255,255,0));filter:blur(20px)}
 canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:2}
 .copy{position:absolute;left:clamp(28px,4.8vw,78px);top:clamp(36px,7vh,84px);z-index:4;color:var(--ink);pointer-events:none;max-width:min(660px,84vw)}
@@ -24,146 +21,177 @@ h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:
 .sub{margin:0;font-size:clamp(12px,1.18vw,17px);line-height:1.7;letter-spacing:.02em;color:rgba(255,255,255,.76);text-shadow:0 4px 12px rgba(31,52,41,.05)}
 .tech{position:absolute;right:clamp(16px,2.6vw,32px);bottom:clamp(16px,2.4vw,26px);z-index:4;padding:8px 11px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.05);backdrop-filter:blur(8px);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);pointer-events:none}
 .version{position:absolute;right:clamp(16px,2.6vw,32px);top:clamp(14px,2.2vw,28px);z-index:5;padding:7px 10px;border:1px solid rgba(255,255,255,.30);border-radius:999px;background:rgba(255,255,255,.12);backdrop-filter:blur(8px);font-size:10px;font-weight:700;letter-spacing:.10em;color:rgba(255,255,255,.86);pointer-events:none}
-.change{position:absolute;right:clamp(16px,2.6vw,32px);top:clamp(48px,5.0vw,62px);z-index:5;font-size:9px;font-weight:650;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.70);text-shadow:0 2px 8px rgba(30,50,40,.08);pointer-events:none}
+.change{position:absolute;right:clamp(16px,2.6vw,32px);top:clamp(48px,5.0vw,62px);z-index:5;font-size:9px;font-weight:650;letter-spacing:.09em;color:rgba(255,255,255,.72);text-shadow:0 2px 8px rgba(30,50,40,.08);pointer-events:none}
 #error{display:none;position:absolute;inset:0;z-index:9;align-items:center;justify-content:center;padding:28px;text-align:center;color:#52645a;background:linear-gradient(#d3edf7,#f7fbf7 60%,#a9ca69)}
 @media(max-width:760px){.copy{top:32px;max-width:88vw}.tech{display:none}.version{top:14px;right:14px;font-size:9px}.change{top:48px;right:14px;font-size:8px}}
 </style>
 </head>
 <body>
-<main id="hero" aria-label="手前から奥へ進む風に斜め方向の風が重なり、ときどき多方向の風が干渉する草原">
+<main id="hero" aria-label="手前から奥へ風が走り、左右斜めからの風が時々重なって干渉する草原">
   <canvas id="webgl"></canvas>
   <section class="copy">
     <p class="kicker">Architectural Informatics Lab.</p>
     <h1>Wide horizon.<br>Living field.</h1>
     <p class="sub">Yamada Satoshi Lab. / Ritsumeikan University</p>
   </section>
-  <div class="version">Living Field v03 · 2026.08.26</div>
-  <div class="change">FRONT → HORIZON · DIAGONAL CROSSWINDS · INTERFERENCE</div>
-  <div class="tech">Three.js · GLSL · instanced meadow · v03</div>
+  <div class="version">Living Field v04 · 2026.08.26</div>
+  <div class="change">手前 → 奥 ／ 左右斜め風 ／ 多方向干渉</div>
+  <div class="tech">Three.js · GLSL · instanced meadow · v04</div>
   <div id="error">WebGL の初期化に失敗しました。</div>
 </main>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js';
 
-const hero = document.getElementById('hero');
-const canvas = document.getElementById('webgl');
-const errorBox = document.getElementById('error');
-const mobile = matchMedia('(max-width: 760px)').matches;
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const MAX_PACKETS = 5;
-const MAX_WHIRLS = 2;
+const hero=document.getElementById('hero');
+const canvas=document.getElementById('webgl');
+const errorBox=document.getElementById('error');
+const mobile=matchMedia('(max-width:760px)').matches;
+const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const MAX_PACKETS=5;
+const MAX_WHIRLS=2;
 
 let renderer;
-try { renderer = new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance',premultipliedAlpha:false}); }
-catch (e) { errorBox.style.display = 'flex'; throw e; }
+try{renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance',premultipliedAlpha:false});}
+catch(e){errorBox.style.display='flex';throw e;}
 renderer.setClearColor(0x000000,0);
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.2 : 1.6));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.2:1.6));
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(36,1,0.05,140);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(36,1,.05,140);
 camera.position.set(0,2.0,8.8);
-camera.lookAt(0,0.58,-45);
+camera.lookAt(0,.58,-45);
 
-const packetA = Array.from({length:MAX_PACKETS},()=>new THREE.Vector4());
-const packetB = Array.from({length:MAX_PACKETS},()=>new THREE.Vector4());
-const packets = Array.from({length:MAX_PACKETS},()=>({}));
-const whirlA = Array.from({length:MAX_WHIRLS},()=>new THREE.Vector4());
-const whirlB = Array.from({length:MAX_WHIRLS},()=>new THREE.Vector4());
-const whirls = Array.from({length:MAX_WHIRLS},()=>({}));
-
-const dirA = new THREE.Vector2();
-const dirB = new THREE.Vector2();
-const dirC = new THREE.Vector2();
-const directionStates = [
-  {base:(Math.random()-.5)*0.42,amp:.15+Math.random()*.20,f1:.040+Math.random()*.025,f2:.080+Math.random()*.045,p1:Math.random()*6.283,p2:Math.random()*6.283},
-  {base:.62+Math.random()*.48,amp:.14+Math.random()*.22,f1:.045+Math.random()*.030,f2:.095+Math.random()*.050,p1:Math.random()*6.283,p2:Math.random()*6.283},
-  {base:-1.10+Math.random()*.48,amp:.14+Math.random()*.22,f1:.043+Math.random()*.028,f2:.090+Math.random()*.050,p1:Math.random()*6.283,p2:Math.random()*6.283}
+const dirA=new THREE.Vector2();
+const dirB=new THREE.Vector2();
+const dirC=new THREE.Vector2();
+const directionStates=[
+  {base:(Math.random()-.5)*.32,amp:.10+Math.random()*.13,f1:.035+Math.random()*.025,p:Math.random()*6.283},
+  {base:.58+Math.random()*.34,amp:.10+Math.random()*.15,f1:.040+Math.random()*.028,p:Math.random()*6.283},
+  {base:-.92-Math.random()*.34,amp:.10+Math.random()*.15,f1:.038+Math.random()*.028,p:Math.random()*6.283}
 ];
-function setDir(v,a){ const clamped=Math.max(-1.38,Math.min(1.38,a)); v.set(Math.sin(clamped),-Math.cos(clamped)); }
-function updateLayerDirections(t){ const targets=[dirA,dirB,dirC]; for(let i=0;i<3;i++){ const s=directionStates[i]; const a=s.base+s.amp*Math.sin(t*s.f1+s.p1)+s.amp*.45*Math.sin(t*s.f2+s.p2); setDir(targets[i],a); } }
+function setDir(v,a){const x=Math.sin(a),z=-Math.cos(a);v.set(x,z).normalize();}
+function updateLayerDirections(t){const ds=[dirA,dirB,dirC];for(let i=0;i<3;i++){const s=directionStates[i];setDir(ds[i],s.base+s.amp*Math.sin(t*s.f1+s.p));}}
 updateLayerDirections(0);
 
+const packetA=Array.from({length:MAX_PACKETS},()=>new THREE.Vector4());
+const packetB=Array.from({length:MAX_PACKETS},()=>new THREE.Vector4());
+const packets=Array.from({length:MAX_PACKETS},()=>({}));
+const whirlA=Array.from({length:MAX_WHIRLS},()=>new THREE.Vector4());
+const whirlB=Array.from({length:MAX_WHIRLS},()=>new THREE.Vector4());
+const whirls=Array.from({length:MAX_WHIRLS},()=>({}));
+
 function resetPacket(p,initial=false){
-  p.x=(Math.random()-.5)*38;
-  p.z=initial?(7-Math.random()*96):(8+Math.random()*12);
-  p.radius=5.8+Math.random()*10.2;
-  p.strength=.22+Math.random()*.74;
-  const family=Math.random(); let angle;
-  if(family<.48) angle=(Math.random()-.5)*.52;
-  else if(family<.74) angle=.52+Math.random()*.72;
-  else angle=-1.24+Math.random()*.72;
-  p.dirX=Math.sin(angle); p.dirZ=-Math.cos(angle);
-  p.speed=5.4+Math.random()*6.4;
-  p.wobble=.28+Math.random()*.95;
-  p.wander=(Math.random()-.5)*.82;
+  const family=Math.random();
+  let angle=family<.50?(Math.random()-.5)*.42:(family<.75?.52+Math.random()*.58:-1.10+Math.random()*.58);
+  setDir(p._dir||(p._dir=new THREE.Vector2()),angle);
+  p.dirX=p._dir.x;p.dirZ=p._dir.y;
+  p.x=family<.50?(Math.random()-.5)*20:(family<.75?-26+Math.random()*10:16+Math.random()*10);
+  p.z=initial?(7-Math.random()*82):(7+Math.random()*7);
+  p.radius=5.2+Math.random()*9.0;
+  p.strength=.22+Math.random()*.78;
+  p.speed=6.0+Math.random()*7.0;
+  p.wander=(Math.random()-.5)*.62;
   p.phase=Math.random()*Math.PI*2;
 }
 function resetWhirl(w,initial=false){
-  w.x=(Math.random()-.5)*30;
-  w.z=initial?(4-Math.random()*84):(8+Math.random()*14);
-  w.radius=2.4+Math.random()*4.8;
-  w.strength=.20+Math.random()*.48;
+  w.x=(Math.random()-.5)*25;
+  w.z=initial?(5-Math.random()*72):(7+Math.random()*8);
+  w.radius=2.2+Math.random()*4.2;
+  w.strength=.20+Math.random()*.44;
   w.spin=Math.random()<.5?-1:1;
-  w.driftX=(Math.random()-.5)*.72;
-  w.speed=2.8+Math.random()*3.4;
+  w.driftX=(Math.random()-.5)*.55;
+  w.speed=3.0+Math.random()*3.5;
   w.phase=Math.random()*Math.PI*2;
-  w.delay=initial?Math.random()*6:2.8+Math.random()*8.8;
-  w.life=-w.delay;
-  w.lifeMax=3.0+Math.random()*3.0;
+  w.life=-(initial?Math.random()*7:3+Math.random()*9);
+  w.lifeMax=2.8+Math.random()*3.0;
 }
 packets.forEach(p=>resetPacket(p,true));
 whirls.forEach(w=>resetWhirl(w,true));
 
-const uniforms={uTime:{value:0},uMotion:{value:reduced?.22:1},uPacketA:{value:packetA},uPacketB:{value:packetB},uWhirlA:{value:whirlA},uWhirlB:{value:whirlB},uDirA:{value:dirA},uDirB:{value:dirB},uDirC:{value:dirC},uInterference:{value:0}};
+const uniforms={
+  uTime:{value:0},uMotion:{value:reduced?.22:1},
+  uPacketA:{value:packetA},uPacketB:{value:packetB},uWhirlA:{value:whirlA},uWhirlB:{value:whirlB},
+  uDirA:{value:dirA},uDirB:{value:dirB},uDirC:{value:dirC},
+  uInterference:{value:0},uEventAge:{value:0}
+};
+
 let interferenceActive=false;
-let nextInterference=5+Math.random()*8;
+let nextInterference=6+Math.random()*8;
+let interferenceStart=0;
 let interferenceEnd=0;
 function updateInterference(dt,t){
-  if(!interferenceActive && t>=nextInterference){ interferenceActive=true; interferenceEnd=t+2.0+Math.random()*3.2; }
-  if(interferenceActive && t>=interferenceEnd){ interferenceActive=false; nextInterference=t+7+Math.random()*13; }
+  if(!interferenceActive&&t>=nextInterference){interferenceActive=true;interferenceStart=t;interferenceEnd=t+4.2+Math.random()*2.6;}
+  if(interferenceActive&&t>=interferenceEnd){interferenceActive=false;nextInterference=t+8+Math.random()*13;}
   const target=interferenceActive?1:0;
-  uniforms.uInterference.value+=(target-uniforms.uInterference.value)*Math.min(1,dt*(interferenceActive?2.8:2.0));
+  uniforms.uInterference.value+=(target-uniforms.uInterference.value)*Math.min(1,dt*(interferenceActive?3.4:2.2));
+  uniforms.uEventAge.value=interferenceActive?t-interferenceStart:0;
 }
 function updatePackets(dt,t){
   for(let i=0;i<MAX_PACKETS;i++){
-    const p=packets[i]; const wobble=Math.sin(t*(.48+p.wobble*.18)+p.phase); const sway=Math.sin(t*(.34+p.wobble*.12)+p.phase*1.5);
-    p.x+=(p.dirX*p.speed+wobble*p.wander)*dt; p.z+=p.dirZ*p.speed*dt;
-    if(p.z<-96||Math.abs(p.x)>48) resetPacket(p,false);
-    packetA[i].set(p.x,p.z,p.radius,p.strength); packetB[i].set(p.dirX+sway*.22,p.dirZ,p.speed,p.phase);
+    const p=packets[i];
+    const curve=Math.sin(t*.55+p.phase)*p.wander;
+    p.x+=(p.dirX*p.speed+curve)*dt;
+    p.z+=p.dirZ*p.speed*dt;
+    if(p.z<-98||Math.abs(p.x)>50)resetPacket(p,false);
+    packetA[i].set(p.x,p.z,p.radius,p.strength);
+    packetB[i].set(p.dirX,p.dirZ,p.speed,p.phase);
   }
 }
 function updateWhirls(dt,t){
   for(let i=0;i<MAX_WHIRLS;i++){
-    const w=whirls[i]; w.life+=dt;
-    if(w.life<0){ whirlA[i].set(w.x,w.z,w.radius,0); whirlB[i].set(w.spin,w.phase,w.driftX,w.speed); continue; }
-    w.x+=(w.driftX+Math.sin(t*.62+w.phase)*.10)*w.speed*dt;
-    w.z-=(1.02+.22*Math.sin(t*.56+w.phase))*w.speed*dt;
-    const fadeIn=Math.min(1,w.life/.34); const fadeOut=Math.min(1,Math.max(0,(w.lifeMax-w.life)/.68)); const envelope=Math.min(fadeIn,fadeOut);
-    if(w.life>w.lifeMax||w.z<-92||Math.abs(w.x)>36){ resetWhirl(w,false); continue; }
-    whirlA[i].set(w.x,w.z,w.radius,w.strength*envelope); whirlB[i].set(w.spin,w.phase,w.driftX,w.speed);
+    const w=whirls[i];w.life+=dt;
+    if(w.life<0){whirlA[i].set(w.x,w.z,w.radius,0);whirlB[i].set(w.spin,w.phase,w.driftX,w.speed);continue;}
+    w.x+=(w.driftX+Math.sin(t*.70+w.phase)*.08)*w.speed*dt;
+    w.z-=(1.04+.20*Math.sin(t*.62+w.phase))*w.speed*dt;
+    const fadeIn=Math.min(1,w.life/.32),fadeOut=Math.min(1,Math.max(0,(w.lifeMax-w.life)/.62));
+    const env=Math.min(fadeIn,fadeOut);
+    if(w.life>w.lifeMax||w.z<-94||Math.abs(w.x)>38){resetWhirl(w,false);continue;}
+    whirlA[i].set(w.x,w.z,w.radius,w.strength*env);
+    whirlB[i].set(w.spin,w.phase,w.driftX,w.speed);
   }
 }
-updatePackets(0,0); updateWhirls(0,0);
+updatePackets(0,0);updateWhirls(0,0);
+
+const commonGLSL=`
+float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float noise2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash21(i),hash21(i+vec2(1.,0.)),f.x),mix(hash21(i+vec2(0.,1.)),hash21(i+vec2(1.,1.)),f.x),f.y);}
+float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*noise2(p);p=p*2.03+11.7;a*=.5;}return s;}
+float ridge(float x,float w){return exp(-x*x*w);}
+float movingFront(vec2 p,vec2 source,vec2 dir,float center,float width,float lateral){
+  vec2 q=p-source;float along=dot(q,dir);vec2 n=vec2(-dir.y,dir.x);float side=dot(q,n);
+  return exp(-pow((along-center)/width,2.)*2.2)*exp(-pow(side/lateral,2.)*.75)*smoothstep(-2.,4.,along);
+}`;
 
 const groundVS=`varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`;
 const groundFS=`
 precision highp float;
 varying vec3 vW;
-uniform float uTime;uniform float uMotion;uniform vec4 uPacketA[${MAX_PACKETS}];uniform vec4 uPacketB[${MAX_PACKETS}];uniform vec4 uWhirlA[${MAX_WHIRLS}];uniform vec4 uWhirlB[${MAX_WHIRLS}];uniform vec2 uDirA;uniform vec2 uDirB;uniform vec2 uDirC;uniform float uInterference;
-float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}float noise2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash21(i),hash21(i+vec2(1.,0.)),f.x),mix(hash21(i+vec2(0.,1.)),hash21(i+vec2(1.,1.)),f.x),f.y);}float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*noise2(p);p=p*2.03+11.7;a*=.5;}return s;}float ridge(float x,float w){return exp(-x*x*w);}
+uniform float uTime;uniform float uMotion;uniform vec4 uPacketA[${MAX_PACKETS}];uniform vec4 uPacketB[${MAX_PACKETS}];uniform vec4 uWhirlA[${MAX_WHIRLS}];uniform vec4 uWhirlB[${MAX_WHIRLS}];uniform vec2 uDirA;uniform vec2 uDirB;uniform vec2 uDirC;uniform float uInterference;uniform float uEventAge;
+${commonGLSL}
 void main(){
-  float t=uTime*uMotion;float depth=clamp((-vW.z+2.)/96.,0.,1.);vec2 p=vW.xz;vec2 nA=vec2(-uDirA.y,uDirA.x);vec2 nB=vec2(-uDirB.y,uDirB.x);vec2 nC=vec2(-uDirC.y,uDirC.x);
-  float broad=sin(dot(p,uDirA)*.086-t*.58+sin(dot(p,nA)*.032+t*.08)*1.55);
-  float cross=sin(dot(p,uDirB)*.150-t*.82+sin(dot(p,nB)*.028-t*.10)*.72);
-  float oblique=sin(dot(p,uDirC)*.214-t*1.06+sin(dot(p,nC)*.030+t*.12)*.62);
+  float t=uTime*uMotion;vec2 p=vW.xz;float depth=clamp((-vW.z+2.)/96.,0.,1.);
+  vec2 nA=vec2(-uDirA.y,uDirA.x),nB=vec2(-uDirB.y,uDirB.x),nC=vec2(-uDirC.y,uDirC.x);
+  float broad=sin(dot(p,uDirA)*.086-t*.58+sin(dot(p,nA)*.032+t*.08)*1.35);
+  float cross=sin(dot(p,uDirB)*.145-t*.80+sin(dot(p,nB)*.030-t*.10)*.72);
+  float oblique=sin(dot(p,uDirC)*.205-t*1.00+sin(dot(p,nC)*.030+t*.11)*.62);
+  float band1=ridge(broad-.12,4.1),band2=ridge(cross+.18,6.8),band3=ridge(oblique-.28,8.0);
+  float centerA=mod(t*8.0,108.0),centerB=mod(t*9.2+27.0,112.0),centerC=mod(t*8.7+59.0,112.0);
+  float frontA=movingFront(p,vec2(0.,7.),uDirA,centerA,7.5,31.0);
+  float frontB=movingFront(p,vec2(-26.,8.),uDirB,centerB,6.2,25.0);
+  float frontC=movingFront(p,vec2(26.,8.),uDirC,centerC,6.2,25.0);
+  float eventCenter=uEventAge*12.5;
+  float eventA=movingFront(p,vec2(0.,7.),uDirA,eventCenter,6.0,34.0);
+  float eventB=movingFront(p,vec2(-27.,8.),uDirB,eventCenter,5.3,26.0);
+  float eventC=movingFront(p,vec2(27.,8.),uDirC,eventCenter,5.3,26.0);
+  float eventMix=uInterference*(eventA+eventB+eventC);
+  float crossing=uInterference*(eventA*eventB+eventB*eventC+eventC*eventA)*2.2;
   float fine=fbm(vec2(vW.x*.065+t*.018,vW.z*.058-t*.09));
-  float band1=ridge(broad-.12,4.2),band2=ridge(cross+.18,7.0),band3=ridge(oblique-.30,8.4);float overlap=band1*band2+.62*band2*band3+.36*band1*band3;
-  vec2 crossAxis=normalize(uDirB-uDirC+vec2(.001));float shear=ridge(sin(dot(p,crossAxis)*.115-t*.72)-.10,5.2);float interference=uInterference*(.78*band2*band3+.42*shear*(band2+band3));
-  float packet=0.;for(int i=0;i<${MAX_PACKETS};i++){vec4 a=uPacketA[i];vec4 b=uPacketB[i];vec2 d=vec2((vW.x-a.x)/(a.z*.95),(vW.z-a.y)/(a.z*2.25));float core=exp(-dot(d,d)*1.55);float skirt=exp(-dot(d*vec2(1.45,.75),d*vec2(1.45,.75))*.52);float burst=.10+1.55*pow(max(0.,sin(t*(.98+b.z*.075)+b.w+float(i)*1.41)),4.0);packet+=(core*1.05+skirt*.40)*a.w*burst;}
-  float whirl=0.;for(int i=0;i<${MAX_WHIRLS};i++){vec4 a=uWhirlA[i];vec2 d=vec2(vW.x-a.x,vW.z-a.y);float dist=length(d);float core=exp(-pow(dist/max(a.z,.001),2.)*2.1);float ring=exp(-pow((dist-a.z*.55)/max(a.z*.38,.001),2.)*2.0);float pulse=.12+1.08*pow(max(0.,sin(t*1.82+uWhirlB[i].y+float(i)*2.1)),3.4);whirl+=(core*.55+ring*.65)*a.w*pulse;}
-  float wind=clamp(.50*band1+.25*band2+.18*band3+.23*overlap+.34*interference+.11*fine+packet*.64+whirl*.38,0.,2.05);
-  vec3 nearC=vec3(.40,.58,.20),midC=vec3(.57,.71,.30),farC=vec3(.72,.80,.48);vec3 c=mix(nearC,midC,smoothstep(0.,.38,depth));c=mix(c,farC,smoothstep(.38,1.,depth));c+=vec3(.06,.07,.015)*wind;c+=vec3(.02,.03,.006)*(fine-.45);c+=vec3(.032,.030,.012)*interference;c+=vec3(.026,.026,.012)*whirl;float haze=smoothstep(.48,1.,depth);c=mix(c,vec3(.88,.91,.82),haze*.56);gl_FragColor=vec4(c,1.);
+  float packet=0.;for(int i=0;i<${MAX_PACKETS};i++){vec4 a=uPacketA[i];vec4 b=uPacketB[i];vec2 d=vec2((vW.x-a.x)/(a.z*.95),(vW.z-a.y)/(a.z*2.15));float core=exp(-dot(d,d)*1.55);float skirt=exp(-dot(d*vec2(1.42,.78),d*vec2(1.42,.78))*.52);float burst=.09+1.60*pow(max(0.,sin(t*(1.02+b.z*.06)+b.w+float(i)*1.41)),4.0);packet+=(core+skirt*.38)*a.w*burst;}
+  float whirl=0.;for(int i=0;i<${MAX_WHIRLS};i++){vec4 a=uWhirlA[i];vec2 d=p-a.xy;float dist=length(d);float core=exp(-pow(dist/max(a.z,.001),2.)*2.1);float ring=exp(-pow((dist-a.z*.55)/max(a.z*.38,.001),2.)*2.);float pulse=.12+1.08*pow(max(0.,sin(t*1.9+uWhirlB[i].y+float(i)*2.1)),3.3);whirl+=(core*.55+ring*.65)*a.w*pulse;}
+  float base=.39*band1+.20*band2+.16*band3+.34*frontA+.27*frontB+.27*frontC+.24*eventMix+.54*crossing+.10*fine+.62*packet+.38*whirl;
+  float wind=clamp(base,0.,2.15);
+  vec3 nearC=vec3(.40,.58,.20),midC=vec3(.57,.71,.30),farC=vec3(.72,.80,.48);vec3 c=mix(nearC,midC,smoothstep(0.,.38,depth));c=mix(c,farC,smoothstep(.38,1.,depth));c+=vec3(.06,.07,.015)*wind;c+=vec3(.025,.028,.009)*crossing;c+=vec3(.02,.03,.006)*(fine-.45);float haze=smoothstep(.48,1.,depth);c=mix(c,vec3(.88,.91,.82),haze*.56);gl_FragColor=vec4(c,1.);
 }`;
 const groundGeo=new THREE.PlaneGeometry(112,110,1,1);groundGeo.rotateX(-Math.PI/2);groundGeo.translate(0,0,-48);scene.add(new THREE.Mesh(groundGeo,new THREE.ShaderMaterial({uniforms,vertexShader:groundVS,fragmentShader:groundFS})));
 
@@ -172,15 +200,17 @@ const bladeCount=mobile?17000:30000;const instA=new Float32Array(bladeCount*4),i
 
 const grassVS=`
 precision highp float;
-attribute vec4 iXZHW;attribute vec4 iSeed;uniform float uTime;uniform float uMotion;uniform vec4 uPacketA[${MAX_PACKETS}];uniform vec4 uPacketB[${MAX_PACKETS}];uniform vec4 uWhirlA[${MAX_WHIRLS}];uniform vec4 uWhirlB[${MAX_WHIRLS}];uniform vec2 uDirA;uniform vec2 uDirB;uniform vec2 uDirC;uniform float uInterference;varying float vDepth;varying float vTip;varying float vWind;varying float vTone;varying float vBlur;
-float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}float noise2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash21(i),hash21(i+vec2(1.,0.)),f.x),mix(hash21(i+vec2(0.,1.)),hash21(i+vec2(1.,1.)),f.x),f.y);}float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*noise2(p);p=p*2.02+13.7;a*=.5;}return s;}float ridge(float x,float w){return exp(-x*x*w);}
+attribute vec4 iXZHW;attribute vec4 iSeed;uniform float uTime;uniform float uMotion;uniform vec4 uPacketA[${MAX_PACKETS}];uniform vec4 uPacketB[${MAX_PACKETS}];uniform vec4 uWhirlA[${MAX_WHIRLS}];uniform vec4 uWhirlB[${MAX_WHIRLS}];uniform vec2 uDirA;uniform vec2 uDirB;uniform vec2 uDirC;uniform float uInterference;uniform float uEventAge;varying float vDepth;varying float vTip;varying float vWind;varying float vTone;varying float vBlur;
+${commonGLSL}
 void main(){
   float prog=position.y,side=position.x*2.;float x0=iXZHW.x,z0=iXZHW.y,h=iXZHW.z,w=iXZHW.w;float seed=iSeed.x,yaw=iSeed.y*6.2831853,lean=(iSeed.z-.5)*.12,tone=iSeed.w;float t=uTime*uMotion;vec2 p0=vec2(x0,z0);vec2 nA=vec2(-uDirA.y,uDirA.x),nB=vec2(-uDirB.y,uDirB.x),nC=vec2(-uDirC.y,uDirC.x);
-  float broad=sin(dot(p0,uDirA)*.086-t*.58+sin(dot(p0,nA)*.032+t*.08)*1.55+seed*.30);float cross=sin(dot(p0,uDirB)*.150-t*.82+sin(dot(p0,nB)*.028-t*.10)*.72+seed*.52);float oblique=sin(dot(p0,uDirC)*.214-t*1.06+sin(dot(p0,nC)*.030+t*.12)*.62+seed*.94);float ripple=sin(dot(p0,normalize(uDirA+uDirB+vec2(.001)))*.31-t*1.34+seed*3.7);float field=fbm(vec2(x0*.065+t*.018,z0*.058-t*.09));
-  float band1=ridge(broad-.12,4.2),band2=ridge(cross+.18,7.0),band3=ridge(oblique-.30,8.4),band4=ridge(ripple-.34,10.0);float overlap=band1*band2+.62*band2*band3+.36*band1*band3;vec2 crossAxis=normalize(uDirB-uDirC+vec2(.001));float shear=ridge(sin(dot(p0,crossAxis)*.115-t*.72)-.10,5.2);float interference=uInterference*(.78*band2*band3+.42*shear*(band2+band3));
-  float packetWind=0.;vec2 packetDir=vec2(0.);for(int i=0;i<${MAX_PACKETS};i++){vec4 a=uPacketA[i];vec4 b=uPacketB[i];vec2 d=vec2((x0-a.x)/(a.z*.95),(z0-a.y)/(a.z*2.25));float core=exp(-dot(d,d)*1.55);float shell=exp(-dot(d*vec2(1.45,.75),d*vec2(1.45,.75))*.52);float burst=.10+1.55*pow(max(0.,sin(t*(.98+b.z*.075)+b.w+float(i)*1.41)),4.0);float gust=(core*1.05+shell*.40)*a.w*burst;packetWind+=gust;packetDir+=normalize(vec2(b.x,b.y))*gust;}
-  float whirlWind=0.;vec2 whirlDir=vec2(0.);for(int i=0;i<${MAX_WHIRLS};i++){vec4 a=uWhirlA[i];vec4 b=uWhirlB[i];vec2 delta=vec2(x0-a.x,z0-a.y);float dist=max(length(delta),.0001);vec2 radial=delta/dist;vec2 tangent=vec2(-radial.y,radial.x)*b.x;float core=exp(-pow(dist/max(a.z,.001),2.)*2.1);float ring=exp(-pow((dist-a.z*.55)/max(a.z*.38,.001),2.)*2.0);float pulse=.12+1.08*pow(max(0.,sin(t*1.82+b.y+float(i)*2.1)),3.4);float whirlG=(core*.70+ring*.90)*a.w*pulse;whirlWind+=whirlG;whirlDir+=(tangent+radial*.14)*whirlG;}
-  float micro=fbm(vec2(x0*.18+seed*2.8+t*.05,z0*.15-t*.18))-.5;float wind=clamp((.50*band1+.25*band2+.18*band3+.06*band4+.24*overlap+.35*interference)*(.9+.22*field)+.08+.10*micro+packetWind*.64+whirlWind*.40,0.,2.12);vec2 layerDir=uDirA*(.52*band1)+uDirB*(.44*band2)+uDirC*(.38*band3);vec2 overlapDir=normalize(uDirA+uDirB+uDirC+vec2(.001))*(.30*overlap);vec2 shearDir=normalize(uDirB-uDirC+vec2(.001))*(band2-band3)*uInterference*.48;vec2 dirMix=uDirA*.30+layerDir+overlapDir+shearDir+packetDir*.48+whirlDir*.42+vec2(micro*.08,0.);vec2 windDir=dirMix/max(length(dirMix),1e-4);
+  float broad=sin(dot(p0,uDirA)*.086-t*.58+sin(dot(p0,nA)*.032+t*.08)*1.35+seed*.30);float cross=sin(dot(p0,uDirB)*.145-t*.80+sin(dot(p0,nB)*.030-t*.10)*.72+seed*.52);float oblique=sin(dot(p0,uDirC)*.205-t*1.00+sin(dot(p0,nC)*.030+t*.11)*.62+seed*.94);float band1=ridge(broad-.12,4.1),band2=ridge(cross+.18,6.8),band3=ridge(oblique-.28,8.0);
+  float centerA=mod(t*8.0,108.0),centerB=mod(t*9.2+27.0,112.0),centerC=mod(t*8.7+59.0,112.0);float frontA=movingFront(p0,vec2(0.,7.),uDirA,centerA,7.5,31.0);float frontB=movingFront(p0,vec2(-26.,8.),uDirB,centerB,6.2,25.0);float frontC=movingFront(p0,vec2(26.,8.),uDirC,centerC,6.2,25.0);
+  float eventCenter=uEventAge*12.5;float eventA=movingFront(p0,vec2(0.,7.),uDirA,eventCenter,6.0,34.0);float eventB=movingFront(p0,vec2(-27.,8.),uDirB,eventCenter,5.3,26.0);float eventC=movingFront(p0,vec2(27.,8.),uDirC,eventCenter,5.3,26.0);float eventMix=uInterference*(eventA+eventB+eventC);float crossing=uInterference*(eventA*eventB+eventB*eventC+eventC*eventA)*2.2;
+  float packetWind=0.;vec2 packetDir=vec2(0.);for(int i=0;i<${MAX_PACKETS};i++){vec4 a=uPacketA[i];vec4 b=uPacketB[i];vec2 d=vec2((x0-a.x)/(a.z*.95),(z0-a.y)/(a.z*2.15));float core=exp(-dot(d,d)*1.55);float shell=exp(-dot(d*vec2(1.42,.78),d*vec2(1.42,.78))*.52);float burst=.09+1.60*pow(max(0.,sin(t*(1.02+b.z*.06)+b.w+float(i)*1.41)),4.0);float gust=(core+shell*.38)*a.w*burst;packetWind+=gust;packetDir+=normalize(b.xy)*gust;}
+  float whirlWind=0.;vec2 whirlDir=vec2(0.);for(int i=0;i<${MAX_WHIRLS};i++){vec4 a=uWhirlA[i],b=uWhirlB[i];vec2 delta=p0-a.xy;float dist=max(length(delta),.0001);vec2 radial=delta/dist;vec2 tangent=vec2(-radial.y,radial.x)*b.x;float core=exp(-pow(dist/max(a.z,.001),2.)*2.1);float ring=exp(-pow((dist-a.z*.55)/max(a.z*.38,.001),2.)*2.);float pulse=.12+1.08*pow(max(0.,sin(t*1.9+b.y+float(i)*2.1)),3.3);float g=(core*.70+ring*.90)*a.w*pulse;whirlWind+=g;whirlDir+=(tangent+radial*.12)*g;}
+  float fine=fbm(vec2(x0*.18+seed*2.8+t*.05,z0*.15-t*.18))-.5;float wind=clamp(.38*band1+.20*band2+.16*band3+.36*frontA+.28*frontB+.28*frontC+.25*eventMix+.58*crossing+.08+.10*fine+.64*packetWind+.40*whirlWind,0.,2.18);
+  vec2 layerDir=uDirA*(.46*band1+.48*frontA)+uDirB*(.37*band2+.42*frontB)+uDirC*(.34*band3+.42*frontC);vec2 eventDir=(uDirA*eventA+uDirB*eventB+uDirC*eventC)*uInterference;vec2 collisionDir=normalize((uDirB-uDirC)+vec2(.001))*crossing*.58;vec2 dirMix=uDirA*.20+layerDir+eventDir*.48+collisionDir+packetDir*.48+whirlDir*.42+vec2(fine*.06,0.);vec2 windDir=dirMix/max(length(dirMix),1e-4);
   float bendAmp=h*(.045+.36*wind)*pow(prog,1.55);vec3 wp=vec3(x0,prog*h,z0);wp.xz+=windDir*bendAmp;wp.x+=lean*h*prog*prog;wp.y-=h*(.016+.095*wind)*pow(prog,2.0);float taper=pow(1.-prog,.82);vec2 sideDir=normalize(vec2(cos(yaw)*.20+.82,sin(yaw)*.20));wp.xz+=sideDir*side*w*taper;vDepth=clamp((-z0+2.)/96.,0.,1.);vTip=prog;vWind=wind;vTone=tone;vBlur=smoothstep(0.,.22,vDepth)*(1.-smoothstep(.28,.72,vDepth));gl_Position=projectionMatrix*viewMatrix*vec4(wp,1.0);
 }`;
 const grassFS=`precision highp float;varying float vDepth;varying float vTip;varying float vWind;varying float vTone;varying float vBlur;void main(){vec3 c0=vec3(.39,.56,.19),c1=vec3(.52,.69,.26),c2=vec3(.72,.81,.47);vec3 c=mix(c0,c1,.32+vTone*.30);c=mix(c,c2,smoothstep(.30,1.,vDepth));c+=vec3(.055,.06,.012)*vWind;c+=vec3(.018,.024,.004)*vTip;c=mix(c,vec3(.88,.91,.84),smoothstep(.52,1.,vDepth)*.62);c=mix(c,vec3(.64,.74,.44),vBlur*.22);float alpha=mix(.56,.16,smoothstep(.42,1.,vDepth));alpha*=mix(1.,.72,vBlur);gl_FragColor=vec4(c,alpha);}`;
