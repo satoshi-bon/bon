@@ -6,26 +6,26 @@
 <meta name="color-scheme" content="light">
 <title>Architectural Informatics Lab. — Living Field</title>
 <style>
-:root{--ink:rgba(255,255,255,.94);--muted:rgba(255,255,255,.78)}
+:root{--ink:rgba(255,255,255,.91);--muted:rgba(255,255,255,.70)}
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d9eef5}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d7e8f1}
 body{font-family:Inter,"Helvetica Neue",Arial,"Hiragino Sans","Yu Gothic",sans-serif}
 #hero{position:relative;width:100%;height:100svh;min-height:560px;overflow:hidden;isolation:isolate;background:
-radial-gradient(circle at 72% 12%,rgba(255,255,255,.96),rgba(255,255,255,0) 28%),
-linear-gradient(to bottom,#badff1 0%,#dff1f7 37%,#f7fbf7 58%,#dfe8c3 67%,#87aa46 100%)}
-#hero::after{content:"";position:absolute;left:-8%;right:-8%;top:52%;height:20%;z-index:1;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.58) 46%,rgba(255,255,255,0));filter:blur(14px)}
+  radial-gradient(circle at 72% 11%,rgba(255,255,255,.62),rgba(255,255,255,0) 27%),
+  linear-gradient(to bottom,#b8d7e9 0%,#d4e7f1 25%,#edf3f5 47%,#f8faf8 66%,#f7f8f3 70%,#c8d98e 72%,#7ca044 100%)}
+#hero::after{content:"";position:absolute;left:-10%;right:-10%;top:63%;height:16%;z-index:1;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.55) 47%,rgba(255,255,255,0));filter:blur(22px)}
 canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:2}
-.copy{position:absolute;left:clamp(26px,4.8vw,78px);top:clamp(30px,7vh,84px);z-index:4;color:var(--ink);pointer-events:none;max-width:min(660px,84vw)}
+.copy{position:absolute;left:clamp(28px,4.8vw,78px);top:clamp(36px,7vh,84px);z-index:4;color:var(--ink);pointer-events:none;max-width:min(660px,84vw)}
 .kicker{margin:0 0 16px;font-size:clamp(10px,1vw,13px);font-weight:700;letter-spacing:.19em;text-transform:uppercase;color:var(--muted)}
-h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:610;letter-spacing:-.04em;text-shadow:0 8px 32px rgba(33,55,43,.08)}
-.sub{margin:0;font-size:clamp(12px,1.18vw,17px);line-height:1.7;letter-spacing:.02em;color:rgba(255,255,255,.82);text-shadow:0 4px 16px rgba(31,52,41,.07)}
-.tech{position:absolute;right:clamp(16px,2.6vw,32px);bottom:clamp(16px,2.4vw,26px);z-index:4;padding:8px 11px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(255,255,255,.07);backdrop-filter:blur(9px);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.68);pointer-events:none}
+h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:610;letter-spacing:-.04em;text-shadow:0 7px 26px rgba(33,55,43,.055)}
+.sub{margin:0;font-size:clamp(12px,1.18vw,17px);line-height:1.7;letter-spacing:.02em;color:rgba(255,255,255,.75);text-shadow:0 4px 12px rgba(31,52,41,.05)}
+.tech{position:absolute;right:clamp(16px,2.6vw,32px);bottom:clamp(16px,2.4vw,26px);z-index:4;padding:8px 11px;border:1px solid rgba(255,255,255,.20);border-radius:999px;background:rgba(255,255,255,.045);backdrop-filter:blur(8px);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.60);pointer-events:none}
 #error{display:none;position:absolute;inset:0;z-index:9;align-items:center;justify-content:center;padding:28px;text-align:center;color:#52645a;background:linear-gradient(#d3edf7,#f7fbf7 60%,#a9ca69)}
 @media(max-width:760px){.copy{top:32px;max-width:88vw}.tech{display:none}}
 </style>
 </head>
 <body>
-<main id="hero" aria-label="手前から奥へ立体的な風の波と塊が伝わる草原">
+<main id="hero" aria-label="低い地平線と広い空、複数の風の層と風の塊が流れる草原">
 <canvas id="webgl"></canvas>
 <section class="copy">
   <p class="kicker">Architectural Informatics Lab.</p>
@@ -35,226 +35,163 @@ h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:
 <div class="tech">Three.js · GLSL · instanced meadow</div>
 <div id="error">WebGL の初期化に失敗しました。</div>
 </main>
-
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js';
 
-const hero = document.getElementById('hero');
-const canvas = document.getElementById('webgl');
-const errorBox = document.getElementById('error');
-const mobile = matchMedia('(max-width: 760px)').matches;
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const MAX_PACKETS = 5;
+const hero=document.getElementById('hero');
+const canvas=document.getElementById('webgl');
+const errorBox=document.getElementById('error');
+const mobile=matchMedia('(max-width:760px)').matches;
+const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const MAX_PACKETS=5;
 
 let renderer;
-try {
-  renderer = new THREE.WebGLRenderer({
-    canvas,
-    alpha:true,
-    antialias:true,
-    powerPreference:'high-performance',
-    premultipliedAlpha:false
-  });
-} catch (e) {
-  errorBox.style.display = 'flex';
-  throw e;
-}
+try{
+  renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance',premultipliedAlpha:false});
+}catch(e){errorBox.style.display='flex';throw e;}
 renderer.setClearColor(0x000000,0);
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.25 : 1.7));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.2:1.55));
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(41, 1, 0.05, 130);
-camera.position.set(0, 2.42, 7.0);
-camera.lookAt(0, 0.38, -38);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(36,1,.05,150);
+camera.position.set(0,2.05,8.8);
+camera.lookAt(0,9.1,-55);
 
-/* =========================
-   gust packets
-========================= */
-const packetA = Array.from({length:MAX_PACKETS}, () => new THREE.Vector4());
-const packetB = Array.from({length:MAX_PACKETS}, () => new THREE.Vector4());
-const packets = Array.from({length:MAX_PACKETS}, () => ({}));
+const packetA=Array.from({length:MAX_PACKETS},()=>new THREE.Vector4());
+const packetB=Array.from({length:MAX_PACKETS},()=>new THREE.Vector4());
+const packets=Array.from({length:MAX_PACKETS},()=>({}));
 
-function resetPacket(p, initial=false){
-  p.x = (Math.random() - 0.5) * 34;
-  p.z = initial ? (6 - Math.random() * 88) : (8 + Math.random() * 14);
-  p.radius = 4.6 + Math.random() * 8.8;
-  p.strength = 0.42 + Math.random() * 1.05;
-
-  const angle = -Math.PI * 0.5 + (Math.random() - 0.5) * 0.95;
-  p.dirX = Math.sin(angle) * (0.22 + Math.random() * 0.82);
-  p.dirZ = -Math.cos(angle);
-
-  p.speed = 3.2 + Math.random() * 7.3;
-  p.wobble = 0.28 + Math.random() * 0.95;
-  p.wander = (Math.random() - 0.5) * 0.85;
-  p.phase = Math.random() * Math.PI * 2.0;
+function resetPacket(p,initial=false){
+  p.x=(Math.random()-.5)*38;
+  p.z=initial?(8-Math.random()*100):(10+Math.random()*18);
+  p.radius=5.5+Math.random()*10.5;
+  p.strength=.25+Math.random()*.72;
+  const deviation=(Math.random()-.5)*1.0;
+  p.dirX=Math.sin(deviation);
+  p.dirZ=-Math.cos(deviation);
+  p.speed=1.8+Math.random()*5.2;
+  p.wobble=.18+Math.random()*.78;
+  p.wander=(Math.random()-.5)*.48;
+  p.phase=Math.random()*Math.PI*2;
 }
-packets.forEach(p => resetPacket(p, true));
+packets.forEach(p=>resetPacket(p,true));
 
-const uniforms = {
+const uniforms={
   uTime:{value:0},
-  uMotion:{value: reduced ? 0.28 : 1.0},
-  uPacketA:{value: packetA},
-  uPacketB:{value: packetB}
+  uMotion:{value:reduced?.24:1},
+  uPacketA:{value:packetA},
+  uPacketB:{value:packetB}
 };
 
-function updatePackets(dt, t){
+function updatePackets(dt,t){
   for(let i=0;i<MAX_PACKETS;i++){
-    const p = packets[i];
-    const wobble = Math.sin(t * (0.32 + p.wobble * 0.18) + p.phase);
-    const sway = Math.sin(t * (0.19 + p.wobble * 0.11) + p.phase * 1.7);
-
-    p.x += (p.dirX * p.speed + wobble * p.wander) * dt;
-    p.z += p.dirZ * p.speed * dt;
-
-    if(p.z < -86 || Math.abs(p.x) > 42) resetPacket(p, false);
-
-    packetA[i].set(p.x, p.z, p.radius, p.strength);
-    packetB[i].set(p.dirX + sway * 0.22, p.dirZ, p.speed, p.wobble);
+    const p=packets[i];
+    const curve=Math.sin(t*(.16+p.wobble*.07)+p.phase)*p.wander;
+    const sway=Math.sin(t*(.21+p.wobble*.09)+p.phase*1.6)*.14;
+    p.x+=(p.dirX*p.speed+curve)*dt;
+    p.z+=p.dirZ*p.speed*dt;
+    if(p.z<-101||Math.abs(p.x)>49)resetPacket(p,false);
+    packetA[i].set(p.x,p.z,p.radius,p.strength);
+    packetB[i].set(p.dirX+sway,p.dirZ,p.speed,p.wobble);
   }
 }
-updatePackets(0, 0);
+updatePackets(0,0);
 
-/* =========================
-   ground
-========================= */
-const groundVS = `
+const terrainGLSL=`
+float terrainHeight(vec2 p){
+  return .055*sin(p.x*.060) + .032*sin(p.x*.025+p.y*.022+1.7) + .018*sin(p.y*.045-1.1);
+}`;
+
+const groundVS=`
 varying vec3 vW;
+${terrainGLSL}
 void main(){
-  vec4 w=modelMatrix*vec4(position,1.0);
+  vec3 p=position;
+  p.y+=terrainHeight(p.xz);
+  vec4 w=modelMatrix*vec4(p,1.0);
   vW=w.xyz;
   gl_Position=projectionMatrix*viewMatrix*w;
 }`;
 
-const groundFS = `
+const groundFS=`
 precision highp float;
 varying vec3 vW;
 uniform float uTime;
 uniform float uMotion;
 uniform vec4 uPacketA[${MAX_PACKETS}];
 uniform vec4 uPacketB[${MAX_PACKETS}];
-
-float hash21(vec2 p){
-  p=fract(p*vec2(123.34,456.21));
-  p+=dot(p,p+45.32);
-  return fract(p.x*p.y);
-}
-float noise2(vec2 p){
-  vec2 i=floor(p),f=fract(p);
-  f=f*f*(3.0-2.0*f);
-  return mix(
-    mix(hash21(i),hash21(i+vec2(1.,0.)),f.x),
-    mix(hash21(i+vec2(0.,1.)),hash21(i+vec2(1.,1.)),f.x),
-    f.y
-  );
-}
-float fbm(vec2 p){
-  float s=0.,a=.5;
-  for(int i=0;i<4;i++){
-    s+=a*noise2(p);
-    p=p*2.03+17.1;
-    a*=.5;
-  }
-  return s;
-}
-float ridge(float x,float w){
-  return exp(-x*x*w);
-}
-
+float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float noise2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash21(i),hash21(i+vec2(1.,0.)),f.x),mix(hash21(i+vec2(0.,1.)),hash21(i+vec2(1.,1.)),f.x),f.y);}
+float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*noise2(p);p=p*2.03+11.7;a*=.5;}return s;}
+float ridge(float x,float w){return exp(-x*x*w);}
 void main(){
   float t=uTime*uMotion;
-  float depth=clamp((-vW.z+1.0)/82.0,0.0,1.0);
-
-  float broad=sin(vW.z*.105+t*.72 + sin(vW.x*.055+t*.17)*1.7);
-  float mid=sin(vW.z*.205+t*1.18 + vW.x*.09 + sin(vW.z*.045-t*.21));
-  float cross=sin(vW.x*.165-vW.z*.11+t*.93);
-  float fine=fbm(vec2(vW.x*.11+t*.035,vW.z*.10+t*.17));
-
-  float band1=ridge(broad-.18,4.2);
-  float band2=ridge(mid+.30,7.0);
-  float band3=ridge(cross-.22,8.2);
-
-  float packet = 0.0;
+  float depth=clamp((-vW.z+2.)/102.,0.,1.);
+  float phaseA=t*.56+sin(t*.12)*2.35+sin(t*.031)*4.8;
+  float phaseB=t*.90+sin(t*.17+1.3)*1.55;
+  float phaseC=t*1.22+sin(t*.23+2.1)*.86;
+  float broad=sin(vW.z*.081+phaseA+sin(vW.x*.032+t*.09)*1.65);
+  float cross=sin(vW.z*.145+vW.x*.082+phaseB+sin(vW.x*.025-t*.13)*.78);
+  float oblique=sin(vW.z*.225-vW.x*.135+phaseC);
+  float fine=fbm(vec2(vW.x*.064+t*.015,vW.z*.057+t*.075));
+  float band1=ridge(broad-.12,4.0);
+  float band2=ridge(cross+.20,6.4);
+  float band3=ridge(oblique-.33,9.0);
+  float overlap=band1*band2+.55*band2*band3+.28*band1*band3;
+  float packet=0.;
   for(int i=0;i<${MAX_PACKETS};i++){
     vec4 a=uPacketA[i];
-    vec2 d=vec2(
-      (vW.x-a.x)/(a.z*.92),
-      (vW.z-a.y)/(a.z*1.95)
-    );
-    float core=exp(-dot(d,d)*1.85);
-    float skirt=exp(-dot(d*vec2(1.7,.82),d*vec2(1.7,.82))*0.62);
-    float pulse=.66+.34*sin(t*(.88+uPacketB[i].w*.34)+float(i)*1.47+vW.x*.03);
-    packet += (core*1.10 + skirt*0.35) * a.w * pulse;
+    vec2 d=vec2((vW.x-a.x)/(a.z*.95),(vW.z-a.y)/(a.z*2.15));
+    float core=exp(-dot(d,d)*1.55);
+    float skirt=exp(-dot(d*vec2(1.42,.76),d*vec2(1.42,.76))*.50);
+    float pulse=.72+.28*sin(t*(.66+uPacketB[i].w*.24)+float(i)*1.27+vW.x*.018);
+    packet+=(core*1.03+skirt*.38)*a.w*pulse;
   }
-
-  float wind=clamp(.54*band1+.34*band2+.18*band3+.21*fine+packet*.72,0.0,1.85);
-
-  vec3 nearC=vec3(.31,.54,.14);
-  vec3 farC=vec3(.67,.75,.39);
-  vec3 c=mix(nearC,farC,pow(depth,.68));
-  c+=vec3(.10,.105,.025)*wind;
-  c+=vec3(.035,.05,.008)*(fine-.45);
-  c+=vec3(.035,.035,.01)*min(packet,1.4);
-
-  float fog=smoothstep(.58,1.0,depth);
-  c=mix(c,vec3(.84,.90,.84),fog*.72);
-
-  gl_FragColor=vec4(c,1.0);
+  float wind=clamp(.50*band1+.22*band2+.10*band3+.20*overlap+.09*fine+.50*packet,0.,1.55);
+  vec3 nearC=vec3(.365,.535,.185);
+  vec3 midC=vec3(.525,.665,.285);
+  vec3 farC=vec3(.715,.785,.465);
+  vec3 c=mix(nearC,midC,smoothstep(0.,.40,depth));
+  c=mix(c,farC,smoothstep(.40,1.,depth));
+  c+=vec3(.045,.050,.010)*wind;
+  c+=vec3(.018,.026,.004)*(fine-.46);
+  float haze=smoothstep(.50,1.,depth);
+  c=mix(c,vec3(.865,.895,.815),haze*.58);
+  gl_FragColor=vec4(c,1.);
 }`;
 
-const groundGeo = new THREE.PlaneGeometry(96, 96, 1, 1);
+const groundGeo=new THREE.PlaneGeometry(120,116,36,36);
 groundGeo.rotateX(-Math.PI/2);
-groundGeo.translate(0,0,-39);
-const groundMat = new THREE.ShaderMaterial({
-  uniforms,
-  vertexShader:groundVS,
-  fragmentShader:groundFS
-});
+groundGeo.translate(0,0,-50);
+const groundMat=new THREE.ShaderMaterial({uniforms,vertexShader:groundVS,fragmentShader:groundFS});
 scene.add(new THREE.Mesh(groundGeo,groundMat));
 
-/* =========================
-   grass geometry
-========================= */
-const segments=6;
-const basePos=[];
-const baseIdx=[];
-for(let s=0;s<=segments;s++){
-  const y=s/segments;
-  basePos.push(-.5,y,0,.5,y,0);
-}
-for(let s=0;s<segments;s++){
-  const a=s*2,b=a+1,c=a+2,d=a+3;
-  baseIdx.push(a,b,c,b,d,c);
-}
-
+const segments=6,basePos=[],baseIdx=[];
+for(let s=0;s<=segments;s++){const y=s/segments;basePos.push(-.5,y,0,.5,y,0);}
+for(let s=0;s<segments;s++){const a=s*2,b=a+1,c=a+2,d=a+3;baseIdx.push(a,b,c,b,d,c);}
 const grassGeo=new THREE.InstancedBufferGeometry();
 grassGeo.setAttribute('position',new THREE.Float32BufferAttribute(basePos,3));
 grassGeo.setIndex(baseIdx);
 
-const bladeCount=mobile?19000:36000;
-const instA=new Float32Array(bladeCount*4);
-const instB=new Float32Array(bladeCount*4);
-
+const bladeCount=mobile?18000:32000;
+const instA=new Float32Array(bladeCount*4),instB=new Float32Array(bladeCount*4);
 for(let i=0;i<bladeCount;i++){
-  const depth=Math.pow(Math.random(),.68);
-  const z=5.8-depth*84;
-  const spread=11+depth*40;
+  const depth=Math.pow(Math.random(),.70);
+  const z=5.5-depth*103;
+  const spread=15+depth*46;
   const x=(Math.random()-.5)*spread*2;
-  const h=.18+Math.random()*.48+(1-depth)*.09;
-  const w=.008+Math.random()*.012;
+  const h=.14+Math.random()*.30+(1-depth)*.045;
+  const w=.0055+Math.random()*.0095;
   const o=i*4;
-  instA[o]=x; instA[o+1]=z; instA[o+2]=h; instA[o+3]=w;
-  instB[o]=Math.random(); instB[o+1]=Math.random(); instB[o+2]=Math.random(); instB[o+3]=Math.random();
+  instA[o]=x;instA[o+1]=z;instA[o+2]=h;instA[o+3]=w;
+  instB[o]=Math.random();instB[o+1]=Math.random();instB[o+2]=Math.random();instB[o+3]=Math.random();
 }
 grassGeo.setAttribute('iXZHW',new THREE.InstancedBufferAttribute(instA,4));
 grassGeo.setAttribute('iSeed',new THREE.InstancedBufferAttribute(instB,4));
 grassGeo.instanceCount=bladeCount;
 
-/* =========================
-   grass shaders
-========================= */
-const grassVS = `
+const grassVS=`
 precision highp float;
 attribute vec4 iXZHW;
 attribute vec4 iSeed;
@@ -262,203 +199,107 @@ uniform float uTime;
 uniform float uMotion;
 uniform vec4 uPacketA[${MAX_PACKETS}];
 uniform vec4 uPacketB[${MAX_PACKETS}];
-
 varying float vDepth;
 varying float vTip;
 varying float vWind;
 varying float vTone;
-
-float hash21(vec2 p){
-  p=fract(p*vec2(123.34,456.21));
-  p+=dot(p,p+45.32);
-  return fract(p.x*p.y);
-}
-float noise2(vec2 p){
-  vec2 i=floor(p),f=fract(p);
-  f=f*f*(3.0-2.0*f);
-  return mix(
-    mix(hash21(i),hash21(i+vec2(1.,0.)),f.x),
-    mix(hash21(i+vec2(0.,1.)),hash21(i+vec2(1.,1.)),f.x),
-    f.y
-  );
-}
-float fbm(vec2 p){
-  float s=0.,a=.5;
-  for(int i=0;i<4;i++){
-    s+=a*noise2(p);
-    p=p*2.02+13.7;
-    a*=.5;
-  }
-  return s;
-}
-float ridge(float x,float w){
-  return exp(-x*x*w);
-}
-
+float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float noise2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash21(i),hash21(i+vec2(1.,0.)),f.x),mix(hash21(i+vec2(0.,1.)),hash21(i+vec2(1.,1.)),f.x),f.y);}
+float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*noise2(p);p=p*2.02+13.7;a*=.5;}return s;}
+float ridge(float x,float w){return exp(-x*x*w);}
+${terrainGLSL}
 void main(){
-  float prog=position.y;
-  float side=position.x*2.0;
-
+  float prog=position.y,side=position.x*2.;
   float x0=iXZHW.x,z0=iXZHW.y,h=iXZHW.z,w=iXZHW.w;
-  float seed=iSeed.x;
-  float yaw=iSeed.y*6.2831853;
-  float lean=(iSeed.z-.5)*.24;
-  float tone=iSeed.w;
+  float seed=iSeed.x,yaw=iSeed.y*6.2831853,lean=(iSeed.z-.5)*.11,tone=iSeed.w;
   float t=uTime*uMotion;
-
-  float broad=sin(z0*.105+t*.72 + sin(x0*.055+t*.17)*1.7);
-  float mid=sin(z0*.205+t*1.18 + x0*.09 + sin(z0*.045-t*.21));
-  float cross=sin(x0*.165-z0*.11+t*.93 + seed*1.7);
-  float narrow=sin(z0*.37+t*1.72 + x0*.18 + seed*4.0);
-  float field=fbm(vec2(x0*.085+t*.028,z0*.09+t*.145));
-
-  float band1=ridge(broad-.18,4.2);
-  float band2=ridge(mid+.30,7.0);
-  float band3=ridge(cross-.22,8.2);
-  float band4=ridge(narrow-.42,10.0);
-
-  float packetWind = 0.0;
-  vec2 packetDir = vec2(0.0);
-
+  float phaseA=t*.56+sin(t*.12)*2.35+sin(t*.031)*4.8;
+  float phaseB=t*.90+sin(t*.17+1.3)*1.55;
+  float phaseC=t*1.22+sin(t*.23+2.1)*.86;
+  float broad=sin(z0*.081+phaseA+sin(x0*.032+t*.09)*1.65);
+  float cross=sin(z0*.145+x0*.082+phaseB+sin(x0*.025-t*.13)*.78+seed*.8);
+  float oblique=sin(z0*.225-x0*.135+phaseC+seed*2.4);
+  float ripple=sin(z0*.34+t*1.43+x0*.065+seed*4.2);
+  float field=fbm(vec2(x0*.064+t*.015,z0*.057+t*.075));
+  float band1=ridge(broad-.12,4.0),band2=ridge(cross+.20,6.4),band3=ridge(oblique-.33,9.0),band4=ridge(ripple-.38,11.0);
+  float overlap=band1*band2+.55*band2*band3+.28*band1*band3;
+  float packetWind=0.;
+  vec2 packetDir=vec2(0.);
   for(int i=0;i<${MAX_PACKETS};i++){
-    vec4 a=uPacketA[i];
-    vec4 b=uPacketB[i];
-    vec2 d=vec2(
-      (x0-a.x)/(a.z*.92),
-      (z0-a.y)/(a.z*1.95)
-    );
-    float core=exp(-dot(d,d)*1.85);
-    float shell=exp(-dot(d*vec2(1.65,.78),d*vec2(1.65,.78))*0.58);
-    float pulse=.66+.34*sin(t*(.88+b.w*.34)+float(i)*1.47+x0*.03);
-    float g=(core*1.10 + shell*0.35) * a.w * pulse;
-    packetWind += g;
-    packetDir += normalize(vec2(b.x,b.y)) * g;
+    vec4 a=uPacketA[i],b=uPacketB[i];
+    vec2 d=vec2((x0-a.x)/(a.z*.95),(z0-a.y)/(a.z*2.15));
+    float core=exp(-dot(d,d)*1.55);
+    float shell=exp(-dot(d*vec2(1.42,.76),d*vec2(1.42,.76))*.50);
+    float pulse=.72+.28*sin(t*(.66+b.w*.24)+float(i)*1.27+x0*.018);
+    float gust=(core*1.03+shell*.38)*a.w*pulse;
+    packetWind+=gust;
+    packetDir+=normalize(vec2(b.x,b.y))*gust;
   }
-
-  float micro=(fbm(vec2(x0*.21+seed*3.2+t*.06,z0*.19+t*.24))-.5);
-
-  float wind=clamp(
-    (.52*band1 + .30*band2 + .18*band3 + .14*band4) * (.82 + .44*field)
-    + .14 + .18*micro + packetWind*.78,
-    0.0,1.9
-  );
-
-  vec2 baseDir=normalize(vec2(
-    .08 + .34*sin(t*.13+z0*.025) + .16*sin(x0*.04-t*.27),
-    -1.0
-  ));
-  vec2 crossDir=vec2(sign(cross)*0.54, -0.28*sign(mid));
-  vec2 dirMix = baseDir + crossDir*(.18+.22*band3) + packetDir*.58 + vec2(micro*.45,0.0);
-  vec2 windDir = dirMix / max(length(dirMix), 1e-4);
-
-  float bendAmp=h*(.10+.66*wind)*pow(prog,1.58);
-
-  vec3 wp=vec3(x0,prog*h,z0);
-  wp.xz += windDir * bendAmp;
-  wp.x += lean*h*prog*prog;
-  wp.y -= h*(.03+.16*wind)*pow(prog,2.15);
-
-  float taper=pow(1.0-prog,.76);
-  vec2 sideDir=normalize(vec2(cos(yaw)*.45+.66,sin(yaw)*.45));
-  wp.xz += sideDir*side*w*taper;
-
-  vDepth=clamp((-z0+1.0)/82.0,0.0,1.0);
+  float micro=fbm(vec2(x0*.17+seed*2.7+t*.043,z0*.145+t*.16))-.5;
+  float wind=clamp((.50*band1+.20*band2+.09*band3+.055*band4+.22*overlap)*(.91+.20*field)+.055+.075*micro+.52*packetWind,0.,1.6);
+  vec2 dirA=normalize(vec2(.015+.08*sin(t*.10+z0*.014),-1.));
+  vec2 dirB=normalize(vec2(.36+.10*sin(t*.15+x0*.013),-.93));
+  vec2 dirC=normalize(vec2(-.31+.10*sin(t*.18-z0*.012),-.95));
+  vec2 dirMix=dirA*(.52*band1+.20)+dirB*(.23*band2)+dirC*(.14*band3)+packetDir*.42+vec2(micro*.05,0.);
+  vec2 windDir=dirMix/max(length(dirMix),1e-4);
+  float groundY=terrainHeight(vec2(x0,z0));
+  float bendAmp=h*(.035+.33*wind)*pow(prog,1.55);
+  vec3 wp=vec3(x0,groundY+prog*h,z0);
+  wp.xz+=windDir*bendAmp;
+  wp.x+=lean*h*prog*prog;
+  wp.y-=h*(.012+.080*wind)*pow(prog,2.0);
+  float taper=pow(1.-prog,.84);
+  vec2 sideDir=normalize(vec2(cos(yaw)*.18+.84,sin(yaw)*.18));
+  wp.xz+=sideDir*side*w*taper;
+  vDepth=clamp((-z0+2.)/102.,0.,1.);
   vTip=prog;
   vWind=wind;
   vTone=tone;
-
-  gl_Position=projectionMatrix*viewMatrix*vec4(wp,1.0);
+  gl_Position=projectionMatrix*viewMatrix*vec4(wp,1.);
 }`;
 
-const grassFS = `
+const grassFS=`
 precision highp float;
 varying float vDepth;
 varying float vTip;
 varying float vWind;
 varying float vTone;
-
 void main(){
-  vec3 c0=vec3(.255,.50,.13);
-  vec3 c1=vec3(.43,.65,.22);
-  vec3 c2=vec3(.67,.76,.40);
-
-  vec3 c=mix(c0,c1,.30+vTone*.38);
-  c=mix(c,c2,smoothstep(.34,1.0,vDepth));
-  c+=vec3(.115,.12,.028)*vWind;
-  c+=vec3(.040,.050,.012)*vTip;
-  c=mix(c,vec3(.82,.88,.82),smoothstep(.70,1.0,vDepth)*.68);
-
-  float alpha=mix(.96,.30,smoothstep(.58,1.0,vDepth));
+  vec3 c0=vec3(.35,.52,.17),c1=vec3(.50,.65,.27),c2=vec3(.71,.79,.46);
+  vec3 c=mix(c0,c1,.31+vTone*.29);
+  c=mix(c,c2,smoothstep(.32,1.,vDepth));
+  c+=vec3(.045,.050,.009)*vWind;
+  c+=vec3(.014,.018,.003)*vTip;
+  c=mix(c,vec3(.86,.89,.81),smoothstep(.55,1.,vDepth)*.60);
+  float alpha=mix(.66,.12,smoothstep(.42,1.,vDepth));
   gl_FragColor=vec4(c,alpha);
 }`;
 
-const grassMat=new THREE.ShaderMaterial({
-  uniforms,
-  vertexShader:grassVS,
-  fragmentShader:grassFS,
-  transparent:true,
-  depthWrite:true,
-  side:THREE.DoubleSide
-});
-
+const grassMat=new THREE.ShaderMaterial({uniforms,vertexShader:grassVS,fragmentShader:grassFS,transparent:true,depthWrite:false,side:THREE.DoubleSide});
 const grassMesh=new THREE.Mesh(grassGeo,grassMat);
 grassMesh.frustumCulled=false;
 scene.add(grassMesh);
 
-/* =========================
-   haze
-========================= */
-const hazeGeo=new THREE.PlaneGeometry(110,22,1,1);
-const hazeMat=new THREE.ShaderMaterial({
-  transparent:true,
-  depthWrite:false,
-  vertexShader:`
-    varying vec2 vUv;
-    void main(){
-      vUv=uv;
-      gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);
-    }
-  `,
-  fragmentShader:`
-    precision highp float;
-    varying vec2 vUv;
-    void main(){
-      float a=sin(vUv.y*3.1415926)*.17*(1.0-smoothstep(.82,1.0,vUv.x));
-      gl_FragColor=vec4(.92,.96,.93,a);
-    }
-  `
-});
+const hazeGeo=new THREE.PlaneGeometry(130,30,1,1);
+const hazeMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`precision highp float;varying vec2 vUv;void main(){float a=pow(sin(vUv.y*3.1415926),1.45)*.14;gl_FragColor=vec4(.93,.95,.90,a);}`});
 const haze=new THREE.Mesh(hazeGeo,hazeMat);
-haze.position.set(0,4.6,-74);
+haze.position.set(0,5.7,-90);
 scene.add(haze);
 
-/* =========================
-   resize / loop
-========================= */
-function resize(){
-  const w=hero.clientWidth;
-  const h=hero.clientHeight;
-  renderer.setSize(w,h,false);
-  camera.aspect=w/h;
-  camera.updateProjectionMatrix();
-}
+function resize(){const w=hero.clientWidth,h=hero.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
 addEventListener('resize',resize,{passive:true});
 resize();
 
 const clock=new THREE.Clock();
 let elapsed=0;
-
 renderer.setAnimationLoop(()=>{
-  const dt=Math.min(clock.getDelta(),0.05);
+  const dt=Math.min(clock.getDelta(),.05);
   elapsed+=dt;
   uniforms.uTime.value=elapsed;
-  updatePackets(dt, elapsed);
+  updatePackets(dt,elapsed);
   renderer.render(scene,camera);
 });
-
-document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden) clock.getDelta();
-});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)clock.getDelta();});
 </script>
 </body>
 </html>
