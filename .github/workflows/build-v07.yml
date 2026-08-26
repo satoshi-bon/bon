@@ -1,0 +1,29 @@
+name: Build Living Field v07
+on:
+  push:
+    paths:
+      - '.github/workflows/build-v07.yml'
+permissions:
+  contents: write
+jobs:
+  build-v07:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build v07 from v06
+        run: python threejs/sky/build_v07.py
+      - name: Validate JavaScript
+        run: node --check /tmp/v07.mjs
+      - name: Commit v07
+        run: |
+          git config user.name 'Satoshi Yamada'
+          git config user.email 'satoshi.bon@gmail.com'
+          git add threejs/sky/v07/index.html threejs/sky/index.html
+          git commit -m 'Add Living Field v07 with separate rainbow swarms'
+          git push
