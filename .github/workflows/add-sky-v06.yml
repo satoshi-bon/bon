@@ -1,0 +1,54 @@
+name: Add sky v06
+on:
+  push:
+    paths:
+      - '.github/workflows/add-sky-v06.yml'
+permissions:
+  contents: write
+jobs:
+  build-v06:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create v06 from v05
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f threejs/sky/v05/index.html
+          mkdir -p threejs/sky/v06
+          cp threejs/sky/v05/index.html threejs/sky/v06/index.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('threejs/sky/v06/index.html')
+          s=p.read_text()
+          replacements={
+            '<!-- Living Field branch: v05 meadow + responsive sky + rainbow morph / v05 -->':'<!-- Living Field branch: v05 meadow + responsive sky + richer rainbow morph / v06 -->',
+            'BRANCH · v05 · responsive sky × rainbow morph':'BRANCH · v06 · responsive sky × richer rainbow morph',
+            'v03を基礎に発展 ／ 一部の飛翔体のみ、共有風場の強い地点で虹色パーティクル集合へ変化':'v05を基礎に発展 ／ 虹色パーティクルクラスタを少し増量し、共有風場の強い地点でより時々見えるよう調整',
+            'Three.js · GLSL · shared wind field · v05':'Three.js · GLSL · shared wind field · v06',
+            'const MAX_RAINBOW_CLUSTERS=mobile?1:2;':'const MAX_RAINBOW_CLUSTERS=mobile?2:3;',
+            'const RAINBOW_PARTS=mobile?26:42;':'const RAINBOW_PARTS=mobile?30:48;',
+            'const RAINBOW_ELIGIBLE_RATE=.11;':'const RAINBOW_ELIGIBLE_RATE=.14;'
+          }
+          for old,new in replacements.items():
+            if old not in s:
+              raise SystemExit(f'missing expected v05 marker: {old}')
+            s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('threejs/sky/index.html')
+          s=p.read_text()
+          s=s.replace("const raw=new URLSearchParams(location.search).get('v')||'05';","const raw=new URLSearchParams(location.search).get('v')||'06';")
+          s=s.replace("const target=v==='03'?'v03/':'v05/';","const target=v==='03'?'v03/':(v==='05'?'v05/':'v06/');")
+          s=s.replace('<p><a href="v05/">Living Field v05</a> / <a href="v03/">Living Field v03</a></p>','<p><a href="v06/">Living Field v06</a> / <a href="v05/">Living Field v05</a> / <a href="v03/">Living Field v03</a></p>')
+          p.write_text(s)
+          PY
+      - name: Commit v06
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Satoshi Yamada'
+          git config user.email 'satoshi.bon@gmail.com'
+          git add threejs/sky/index.html threejs/sky/v06/index.html
+          git commit -m 'Add sky v06 with slightly more rainbow clusters'
+          git push
