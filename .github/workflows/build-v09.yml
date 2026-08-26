@@ -1,0 +1,29 @@
+name: Build Living Field v09
+on:
+  push:
+    paths:
+      - '.github/workflows/build-v09.yml'
+permissions:
+  contents: write
+jobs:
+  build-v09:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build v09 from v08
+        run: python threejs/sky/build_v09.py
+      - name: Validate JavaScript
+        run: node --check /tmp/v09.mjs
+      - name: Commit v09
+        run: |
+          git config user.name 'Satoshi Yamada'
+          git config user.email 'satoshi.bon@gmail.com'
+          git add threejs/sky/v09/index.html threejs/sky/index.html
+          git commit -m 'Add Living Field v09 with visible rainbow flyer flocks'
+          git push
