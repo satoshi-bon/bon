@@ -1,0 +1,29 @@
+name: Build Living Field v12
+on:
+  push:
+    paths:
+      - '.github/workflows/build-v12.yml'
+permissions:
+  contents: write
+jobs:
+  build-v12:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build v12 from v11
+        run: python threejs/sky/build_v12.py
+      - name: Validate JavaScript
+        run: node --check /tmp/v12.mjs
+      - name: Commit v12
+        run: |
+          git config user.name 'Satoshi Yamada'
+          git config user.email 'satoshi.bon@gmail.com'
+          git add threejs/sky/index.html threejs/sky/v12/index.html
+          git commit -m 'Add Living Field v12 with balanced rainbow flock spawning'
+          git push
