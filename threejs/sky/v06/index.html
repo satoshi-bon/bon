@@ -1,0 +1,270 @@
+<!doctype html>
+<!-- Living Field branch: v05 meadow + responsive sky + richer rainbow morph / v06 -->
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Architectural Informatics Lab. — Living Field / Responsive Sky</title>
+<style>
+:root{--ink:rgba(255,255,255,.91);--muted:rgba(255,255,255,.70)}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#d7e8f1}
+body{font-family:Inter,"Helvetica Neue",Arial,"Hiragino Sans","Yu Gothic",sans-serif}
+#hero{position:relative;width:100%;height:100svh;min-height:560px;overflow:hidden;isolation:isolate;background:linear-gradient(to bottom,#b9d8ea 0%,#d9e9f2 24%,#f0f3f2 51%,#f5f4ef 61%,#c9d98d 72%,#89ab49 100%)}
+#hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(circle at 68% 16%,rgba(255,255,255,.70),rgba(255,255,255,0) 28%),linear-gradient(to bottom,rgba(255,255,255,.06),rgba(255,255,255,0) 26%,rgba(255,255,255,.08) 58%,rgba(255,255,255,.02))}
+#hero::after{content:"";position:absolute;left:-8%;right:-8%;top:59%;height:15%;z-index:1;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.56) 48%,rgba(255,255,255,0));filter:blur(20px)}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:2}
+.copy{position:absolute;left:clamp(28px,4.8vw,78px);top:clamp(36px,7vh,84px);z-index:4;color:var(--ink);pointer-events:none;max-width:min(660px,84vw)}
+.kicker{margin:0 0 16px;font-size:clamp(10px,1vw,13px);font-weight:700;letter-spacing:.19em;text-transform:uppercase;color:var(--muted)}
+h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:610;letter-spacing:-.04em;text-shadow:0 8px 28px rgba(33,55,43,.06)}
+.sub{margin:0;font-size:clamp(12px,1.18vw,17px);line-height:1.7;letter-spacing:.02em;color:rgba(255,255,255,.76);text-shadow:0 4px 12px rgba(31,52,41,.05)}
+.tech{position:absolute;right:clamp(16px,2.6vw,32px);bottom:clamp(16px,2.4vw,26px);z-index:4;padding:8px 11px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.05);backdrop-filter:blur(8px);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);pointer-events:none}
+.version{position:absolute;right:clamp(16px,2.6vw,32px);top:clamp(14px,2.2vw,28px);z-index:5;padding:7px 10px;border:1px solid rgba(255,255,255,.30);border-radius:999px;background:rgba(255,255,255,.12);backdrop-filter:blur(8px);font-size:10px;font-weight:700;letter-spacing:.10em;color:rgba(255,255,255,.86);pointer-events:none}
+.change{position:absolute;right:clamp(16px,2.6vw,32px);top:clamp(48px,5.0vw,62px);z-index:5;max-width:min(560px,78vw);text-align:right;font-size:9px;font-weight:650;line-height:1.5;letter-spacing:.09em;color:rgba(255,255,255,.72);text-shadow:0 2px 8px rgba(30,50,40,.08);pointer-events:none}
+#error{display:none;position:absolute;inset:0;z-index:9;align-items:center;justify-content:center;padding:28px;text-align:center;color:#52645a;background:linear-gradient(#d3edf7,#f7fbf7 60%,#a9ca69)}
+@media(max-width:760px){.copy{top:32px;max-width:88vw}.tech{display:none}.version{top:14px;right:14px;font-size:8px}.change{top:48px;right:14px;font-size:7px;max-width:68vw}}
+</style>
+</head>
+<body>
+<main id="hero" aria-label="v05の草原と同じ風場が草・飛翔体・空を動かし、一部の飛翔体だけが時折虹色のパーティクル集合へほどける分岐案">
+  <canvas id="webgl"></canvas>
+  <section class="copy">
+    <p class="kicker">Architectural Informatics Lab.</p>
+    <h1>Wide horizon.<br>Living field.</h1>
+    <p class="sub">Yamada Satoshi Lab. / Ritsumeikan University</p>
+  </section>
+  <div class="version">BRANCH · v06 · responsive sky × richer rainbow morph</div>
+  <div class="change">v05を基礎に発展 ／ 虹色パーティクルクラスタを少し増量し、共有風場の強い地点でより時々見えるよう調整</div>
+  <div class="tech">Three.js · GLSL · shared wind field · v06</div>
+  <div id="error">WebGL の初期化に失敗しました。</div>
+</main>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js';
+
+const hero=document.getElementById('hero');
+const canvas=document.getElementById('webgl');
+const errorBox=document.getElementById('error');
+const mobile=matchMedia('(max-width:760px)').matches;
+const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const MAX_PACKETS=5;
+const MAX_WHIRLS=2;
+const MAX_RAINBOW_CLUSTERS=mobile?2:3;
+const RAINBOW_PARTS=mobile?30:48;
+const RAINBOW_ELIGIBLE_RATE=.14;
+
+let renderer;
+try{renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance',premultipliedAlpha:false});}
+catch(e){errorBox.style.display='flex';throw e;}
+renderer.setClearColor(0x000000,0);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.2:1.6));
+
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(36,1,0.05,140);
+camera.position.set(0,2.0,8.8);
+camera.lookAt(0,0.58,-45);
+
+const packetA=Array.from({length:MAX_PACKETS},()=>new THREE.Vector4());
+const packetB=Array.from({length:MAX_PACKETS},()=>new THREE.Vector4());
+const packets=Array.from({length:MAX_PACKETS},()=>({}));
+const whirlA=Array.from({length:MAX_WHIRLS},()=>new THREE.Vector4());
+const whirlB=Array.from({length:MAX_WHIRLS},()=>new THREE.Vector4());
+const whirls=Array.from({length:MAX_WHIRLS},()=>({}));
+
+const dirA=new THREE.Vector2();
+const dirB=new THREE.Vector2();
+const dirC=new THREE.Vector2();
+const directionStates=[
+  {base:(Math.random()-.5)*0.42,amp:.15+Math.random()*.20,f1:.040+Math.random()*.025,f2:.080+Math.random()*.045,p1:Math.random()*6.283,p2:Math.random()*6.283},
+  {base:.62+Math.random()*.48,amp:.14+Math.random()*.22,f1:.045+Math.random()*.030,f2:.095+Math.random()*.050,p1:Math.random()*6.283,p2:Math.random()*6.283},
+  {base:-1.10+Math.random()*.48,amp:.14+Math.random()*.22,f1:.043+Math.random()*.028,f2:.090+Math.random()*.050,p1:Math.random()*6.283,p2:Math.random()*6.283}
+];
+function setDir(v,a){const clamped=Math.max(-1.38,Math.min(1.38,a));v.set(Math.sin(clamped),-Math.cos(clamped));}
+function updateLayerDirections(t){const targets=[dirA,dirB,dirC];for(let i=0;i<3;i++){const s=directionStates[i];const a=s.base+s.amp*Math.sin(t*s.f1+s.p1)+s.amp*.45*Math.sin(t*s.f2+s.p2);setDir(targets[i],a);}}
+updateLayerDirections(0);
+
+function resetPacket(p,initial=false){
+  p.x=(Math.random()-.5)*38;
+  p.z=initial?(7-Math.random()*96):(8+Math.random()*12);
+  p.radius=5.8+Math.random()*10.2;
+  p.strength=.22+Math.random()*.74;
+  const family=Math.random();let angle;
+  if(family<.48) angle=(Math.random()-.5)*.52;
+  else if(family<.74) angle=.52+Math.random()*.72;
+  else angle=-1.24+Math.random()*.72;
+  p.dirX=Math.sin(angle);p.dirZ=-Math.cos(angle);
+  p.speed=5.4+Math.random()*6.4;
+  p.wobble=.28+Math.random()*.95;
+  p.wander=(Math.random()-.5)*.82;
+  p.phase=Math.random()*Math.PI*2;
+}
+function resetWhirl(w,initial=false){
+  w.x=(Math.random()-.5)*30;
+  w.z=initial?(4-Math.random()*84):(8+Math.random()*14);
+  w.radius=2.4+Math.random()*4.8;
+  w.strength=.20+Math.random()*.48;
+  w.spin=Math.random()<.5?-1:1;
+  w.driftX=(Math.random()-.5)*.72;
+  w.speed=2.8+Math.random()*3.4;
+  w.phase=Math.random()*Math.PI*2;
+  w.delay=initial?Math.random()*6:2.8+Math.random()*8.8;
+  w.life=-w.delay;
+  w.lifeMax=3.0+Math.random()*3.0;
+}
+packets.forEach(p=>resetPacket(p,true));
+whirls.forEach(w=>resetWhirl(w,true));
+
+const uniforms={uTime:{value:0},uMotion:{value:reduced?.22:1},uPacketA:{value:packetA},uPacketB:{value:packetB},uWhirlA:{value:whirlA},uWhirlB:{value:whirlB},uDirA:{value:dirA},uDirB:{value:dirB},uDirC:{value:dirC},uInterference:{value:0}};
+let interferenceActive=false;
+let nextInterference=5+Math.random()*8;
+let interferenceEnd=0;
+function updateInterference(dt,t){
+  if(!interferenceActive && t>=nextInterference){interferenceActive=true;interferenceEnd=t+2.0+Math.random()*3.2;}
+  if(interferenceActive && t>=interferenceEnd){interferenceActive=false;nextInterference=t+7+Math.random()*13;}
+  const target=interferenceActive?1:0;
+  uniforms.uInterference.value+=(target-uniforms.uInterference.value)*Math.min(1,dt*(interferenceActive?2.8:2.0));
+}
+function updatePackets(dt,t){
+  for(let i=0;i<MAX_PACKETS;i++){
+    const p=packets[i];const wobble=Math.sin(t*(.48+p.wobble*.18)+p.phase);const sway=Math.sin(t*(.34+p.wobble*.12)+p.phase*1.5);
+    p.x+=(p.dirX*p.speed+wobble*p.wander)*dt;p.z+=p.dirZ*p.speed*dt;
+    if(p.z<-96||Math.abs(p.x)>48) resetPacket(p,false);
+    packetA[i].set(p.x,p.z,p.radius,p.strength);packetB[i].set(p.dirX+sway*.22,p.dirZ,p.speed,p.phase);
+  }
+}
+function updateWhirls(dt,t){
+  for(let i=0;i<MAX_WHIRLS;i++){
+    const w=whirls[i];w.life+=dt;
+    if(w.life<0){whirlA[i].set(w.x,w.z,w.radius,0);whirlB[i].set(w.spin,w.phase,w.driftX,w.speed);continue;}
+    w.x+=(w.driftX+Math.sin(t*.62+w.phase)*.10)*w.speed*dt;
+    w.z-=(1.02+.22*Math.sin(t*.56+w.phase))*w.speed*dt;
+    const fadeIn=Math.min(1,w.life/.34);const fadeOut=Math.min(1,Math.max(0,(w.lifeMax-w.life)/.68));const envelope=Math.min(fadeIn,fadeOut);
+    if(w.life>w.lifeMax||w.z<-92||Math.abs(w.x)>36){resetWhirl(w,false);continue;}
+    whirlA[i].set(w.x,w.z,w.radius,w.strength*envelope);whirlB[i].set(w.spin,w.phase,w.driftX,w.speed);
+  }
+}
+updatePackets(0,0);updateWhirls(0,0);
+
+const skyVS=`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`;
+const skyFS=`
+precision highp float;
+varying vec2 vUv;
+uniform float uTime;uniform float uMotion;uniform vec4 uPacketA[${MAX_PACKETS}];uniform vec4 uPacketB[${MAX_PACKETS}];uniform vec4 uWhirlA[${MAX_WHIRLS}];uniform vec4 uWhirlB[${MAX_WHIRLS}];uniform vec2 uDirA;uniform vec2 uDirB;uniform vec2 uDirC;uniform float uInterference;
+float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}float noise2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash21(i),hash21(i+vec2(1.,0.)),f.x),mix(hash21(i+vec2(0.,1.)),hash21(i+vec2(1.,1.)),f.x),f.y);}float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*noise2(p);p=p*2.03+11.7;a*=.5;}return s;}float ridge(float x,float w){return exp(-x*x*w);} 
+void main(){
+  float t=uTime*uMotion;vec2 uv=vUv;vec2 p=vec2((uv.x-.5)*74.,(uv.y-.18)*60.);
+  vec2 sA=normalize(vec2(uDirA.x,-uDirA.y*.30)+vec2(.001));vec2 sB=normalize(vec2(uDirB.x,-uDirB.y*.22)+vec2(.001));vec2 sC=normalize(vec2(uDirC.x,-uDirC.y*.26)+vec2(.001));
+  vec2 nA=vec2(-sA.y,sA.x),nB=vec2(-sB.y,sB.x),nC=vec2(-sC.y,sC.x);
+  float a=sin(dot(p,sA)*.092-t*.34+sin(dot(p,nA)*.031+t*.055)*1.55);float b=sin(dot(p,sB)*.137-t*.47+sin(dot(p,nB)*.026-t*.044)*.88);float c=sin(dot(p,sC)*.205-t*.58+sin(dot(p,nC)*.034+t*.063)*.64);
+  float bandA=ridge(a-.18,3.3),bandB=ridge(b+.12,5.6),bandC=ridge(c-.26,7.5);float veil=fbm(vec2(p.x*.043+t*.014,p.y*.050-t*.026));float fine=fbm(vec2(p.x*.090-t*.019,p.y*.082+t*.016));
+  float packet=0.;for(int i=0;i<${MAX_PACKETS};i++){vec4 pa=uPacketA[i];vec4 pb=uPacketB[i];float px=.5+pa.x/78.;float depth=clamp((-pa.y+2.)/98.,0.,1.);float py=.17+depth*.55;vec2 d=(uv-vec2(px,py))/vec2(.10+.10*pa.z/16.,.085+.07*pa.z/16.);float pulse=.14+1.35*pow(max(0.,sin(t*(.70+pb.z*.045)+pb.w+float(i)*1.21)),3.4);packet+=exp(-dot(d,d)*1.6)*pa.w*pulse;}
+  float whirl=0.;for(int i=0;i<${MAX_WHIRLS};i++){vec4 wa=uWhirlA[i];vec4 wb=uWhirlB[i];float wx=.5+wa.x/72.;float depth=clamp((-wa.y+2.)/94.,0.,1.);float wy=.16+depth*.50;vec2 d=(uv-vec2(wx,wy))/vec2(.075+.06*wa.z/7.,.065+.05*wa.z/7.);float dist=length(d);float ring=exp(-pow(dist-.55,2.)*7.0);whirl+=ring*wa.w*(.26+.74*pow(max(0.,sin(t*1.30+wb.y)),2.8));}
+  float low=1.-smoothstep(.12,.72,uv.y);float upper=smoothstep(.16,.98,uv.y);float flow=.28*bandA+.17*bandB+.12*bandC+.20*bandA*bandB+.15*uInterference*(bandB+bandC);flow+=packet*.22+whirl*.18;
+  float density=clamp(.34*(veil-.42)+.13*(fine-.50)+flow,0.,1.35);float horizonPulse=(packet*.22+whirl*.18)*low;vec3 cool=vec3(.78,.88,.93),white=vec3(.98,.99,.98),warm=vec3(.97,.96,.90);vec3 tint=mix(cool,white,.48+.36*veil);tint=mix(tint,warm,clamp(.10*bandB+.16*uInterference+.10*horizonPulse,0.,.32));
+  float alpha=(.035+.16*density)*(.44+.56*upper)+.055*horizonPulse;alpha*=smoothstep(.02,.16,uv.y)*(1.-smoothstep(.91,1.,uv.y)*.34);gl_FragColor=vec4(tint,alpha);
+}`;
+const skyGeo=new THREE.PlaneGeometry(168,76,1,1);const skyMat=new THREE.ShaderMaterial({uniforms,vertexShader:skyVS,fragmentShader:skyFS,transparent:true,depthWrite:false,depthTest:true,side:THREE.DoubleSide});const sky=new THREE.Mesh(skyGeo,skyMat);sky.position.set(0,20,-110);sky.scale.set(1.15,1.18,1);sky.renderOrder=-20;scene.add(sky);
+
+const groundVS=`varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`;
+const groundFS=`
+precision highp float;
+varying vec3 vW;
+uniform float uTime;uniform float uMotion;uniform vec4 uPacketA[${MAX_PACKETS}];uniform vec4 uPacketB[${MAX_PACKETS}];uniform vec4 uWhirlA[${MAX_WHIRLS}];uniform vec4 uWhirlB[${MAX_WHIRLS}];uniform vec2 uDirA;uniform vec2 uDirB;uniform vec2 uDirC;uniform float uInterference;
+float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}float noise2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash21(i),hash21(i+vec2(1.,0.)),f.x),mix(hash21(i+vec2(0.,1.)),hash21(i+vec2(1.,1.)),f.x),f.y);}float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*noise2(p);p=p*2.03+11.7;a*=.5;}return s;}float ridge(float x,float w){return exp(-x*x*w);} 
+void main(){
+  float t=uTime*uMotion;float depth=clamp((-vW.z+2.)/96.,0.,1.);vec2 p=vW.xz;vec2 nA=vec2(-uDirA.y,uDirA.x);vec2 nB=vec2(-uDirB.y,uDirB.x);vec2 nC=vec2(-uDirC.y,uDirC.x);
+  float broad=sin(dot(p,uDirA)*.086-t*.58+sin(dot(p,nA)*.032+t*.08)*1.55);float cross=sin(dot(p,uDirB)*.150-t*.82+sin(dot(p,nB)*.028-t*.10)*.72);float oblique=sin(dot(p,uDirC)*.214-t*1.06+sin(dot(p,nC)*.030+t*.12)*.62);
+  float movingFront=ridge(sin(dot(p,vec2(0.0,-1.0))*.145-t*.96)-.26,3.1)+.55*ridge(sin(dot(p,normalize(vec2(.42,-1.0)))*.156-t*1.08)-.18,3.9)+.55*ridge(sin(dot(p,normalize(vec2(-.42,-1.0)))*.156-t*1.04)-.18,3.9);float fine=fbm(vec2(vW.x*.065+t*.018,vW.z*.058-t*.09));
+  float band1=ridge(broad-.12,4.2),band2=ridge(cross+.18,7.0),band3=ridge(oblique-.30,8.4);float overlap=band1*band2+.62*band2*band3+.36*band1*band3;vec2 crossAxis=normalize(uDirB-uDirC+vec2(.001));float shear=ridge(sin(dot(p,crossAxis)*.115-t*.72)-.10,5.2);float interference=uInterference*(.78*band2*band3+.42*shear*(band2+band3));
+  float packet=0.;for(int i=0;i<${MAX_PACKETS};i++){vec4 a=uPacketA[i];vec4 b=uPacketB[i];vec2 d=vec2((vW.x-a.x)/(a.z*.95),(vW.z-a.y)/(a.z*2.25));float core=exp(-dot(d,d)*1.55);float skirt=exp(-dot(d*vec2(1.45,.75),d*vec2(1.45,.75))*.52);float burst=.10+1.55*pow(max(0.,sin(t*(.98+b.z*.075)+b.w+float(i)*1.41)),4.0);packet+=(core*1.05+skirt*.40)*a.w*burst;}
+  float whirl=0.;for(int i=0;i<${MAX_WHIRLS};i++){vec4 a=uWhirlA[i];vec2 d=vec2(vW.x-a.x,vW.z-a.y);float dist=length(d);float core=exp(-pow(dist/max(a.z,.001),2.)*2.1);float ring=exp(-pow((dist-a.z*.55)/max(a.z*.38,.001),2.)*2.0);float pulse=.12+1.08*pow(max(0.,sin(t*1.82+uWhirlB[i].y+float(i)*2.1)),3.4);whirl+=(core*.55+ring*.65)*a.w*pulse;}
+  float fadeGrass=1.0-smoothstep(.36,1.0,depth);float wind=clamp((.50*band1+.25*band2+.18*band3+.23*overlap+.34*interference+.32*movingFront)*fadeGrass+.11*fine+packet*.64+whirl*.38,0.,2.05);
+  vec3 nearC=vec3(.40,.58,.20),midC=vec3(.57,.71,.30),farC=vec3(.72,.80,.48);vec3 c=mix(nearC,midC,smoothstep(0.,.38,depth));c=mix(c,farC,smoothstep(.38,1.,depth));c+=vec3(.06,.07,.015)*wind;c+=vec3(.02,.03,.006)*(fine-.45);c+=vec3(.032,.030,.012)*interference;c+=vec3(.026,.026,.012)*whirl;float haze=smoothstep(.48,1.,depth);c=mix(c,vec3(.88,.91,.82),haze*.56);gl_FragColor=vec4(c,1.);
+}`;
+const groundGeo=new THREE.PlaneGeometry(112,110,1,1);groundGeo.rotateX(-Math.PI/2);groundGeo.translate(0,0,-48);scene.add(new THREE.Mesh(groundGeo,new THREE.ShaderMaterial({uniforms,vertexShader:groundVS,fragmentShader:groundFS})));
+
+const segments=6,basePos=[],baseIdx=[];for(let s=0;s<=segments;s++){const y=s/segments;basePos.push(-.5,y,0,.5,y,0);}for(let s=0;s<segments;s++){const a=s*2,b=a+1,c=a+2,d=a+3;baseIdx.push(a,b,c,b,d,c);}const grassGeo=new THREE.InstancedBufferGeometry();grassGeo.setAttribute('position',new THREE.Float32BufferAttribute(basePos,3));grassGeo.setIndex(baseIdx);
+const bladeCount=mobile?26000:52000;const instA=new Float32Array(bladeCount*4),instB=new Float32Array(bladeCount*4);
+for(let i=0;i<bladeCount;i++){const nearBias=Math.pow(Math.random(),2.6);const z=5-nearBias*96;const depth=Math.min(1,Math.max(0,(-z+2)/96));const spread=11+depth*38;const x=(Math.random()-.5)*spread*2;const frontFactor=1.0-depth;const h=.18+frontFactor*.22+Math.random()*.24;const w=.007+frontFactor*.008+Math.random()*.008;const o=i*4;instA[o]=x;instA[o+1]=z;instA[o+2]=h;instA[o+3]=w;instB[o]=Math.random();instB[o+1]=Math.random();instB[o+2]=Math.random();instB[o+3]=Math.random();}
+grassGeo.setAttribute('iXZHW',new THREE.InstancedBufferAttribute(instA,4));grassGeo.setAttribute('iSeed',new THREE.InstancedBufferAttribute(instB,4));grassGeo.instanceCount=bladeCount;
+
+const grassVS=`
+precision highp float;
+attribute vec4 iXZHW;attribute vec4 iSeed;uniform float uTime;uniform float uMotion;uniform vec4 uPacketA[${MAX_PACKETS}];uniform vec4 uPacketB[${MAX_PACKETS}];uniform vec4 uWhirlA[${MAX_WHIRLS}];uniform vec4 uWhirlB[${MAX_WHIRLS}];uniform vec2 uDirA;uniform vec2 uDirB;uniform vec2 uDirC;uniform float uInterference;varying float vDepth;varying float vTip;varying float vWind;varying float vTone;varying float vBlur;varying float vFade;
+float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}float noise2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash21(i),hash21(i+vec2(1.,0.)),f.x),mix(hash21(i+vec2(0.,1.)),hash21(i+vec2(1.,1.)),f.x),f.y);}float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*noise2(p);p=p*2.02+13.7;a*=.5;}return s;}float ridge(float x,float w){return exp(-x*x*w);}
+void main(){
+  float prog=position.y,side=position.x*2.;float x0=iXZHW.x,z0=iXZHW.y,h=iXZHW.z,w=iXZHW.w;float seed=iSeed.x,yaw=iSeed.y*6.2831853,lean=(iSeed.z-.5)*.12,tone=iSeed.w;float t=uTime*uMotion;vec2 p0=vec2(x0,z0);vec2 nA=vec2(-uDirA.y,uDirA.x),nB=vec2(-uDirB.y,uDirB.x),nC=vec2(-uDirC.y,uDirC.x);
+  float broad=sin(dot(p0,uDirA)*.086-t*.58+sin(dot(p0,nA)*.032+t*.08)*1.55+seed*.30);float cross=sin(dot(p0,uDirB)*.150-t*.82+sin(dot(p0,nB)*.028-t*.10)*.72+seed*.52);float oblique=sin(dot(p0,uDirC)*.214-t*1.06+sin(dot(p0,nC)*.030+t*.12)*.62+seed*.94);float ripple=sin(dot(p0,normalize(uDirA+uDirB+vec2(.001)))*.31-t*1.34+seed*3.7);float movingFront=ridge(sin(dot(p0,vec2(0.0,-1.0))*.145-t*.96)-.26,3.1)+.55*ridge(sin(dot(p0,normalize(vec2(.42,-1.0)))*.156-t*1.08)-.18,3.9)+.55*ridge(sin(dot(p0,normalize(vec2(-.42,-1.0)))*.156-t*1.04)-.18,3.9);float field=fbm(vec2(x0*.065+t*.018,z0*.058-t*.09));
+  float band1=ridge(broad-.12,4.2),band2=ridge(cross+.18,7.0),band3=ridge(oblique-.30,8.4),band4=ridge(ripple-.34,10.0);float overlap=band1*band2+.62*band2*band3+.36*band1*band3;vec2 crossAxis=normalize(uDirB-uDirC+vec2(.001));float shear=ridge(sin(dot(p0,crossAxis)*.115-t*.72)-.10,5.2);float interference=uInterference*(.78*band2*band3+.42*shear*(band2+band3));
+  float packetWind=0.;vec2 packetDir=vec2(0.);for(int i=0;i<${MAX_PACKETS};i++){vec4 a=uPacketA[i];vec4 b=uPacketB[i];vec2 d=vec2((x0-a.x)/(a.z*.95),(z0-a.y)/(a.z*2.25));float core=exp(-dot(d,d)*1.55);float shell=exp(-dot(d*vec2(1.45,.75),d*vec2(1.45,.75))*.52);float burst=.10+1.55*pow(max(0.,sin(t*(.98+b.z*.075)+b.w+float(i)*1.41)),4.0);float gust=(core*1.05+shell*.40)*a.w*burst;packetWind+=gust;packetDir+=normalize(vec2(b.x,b.y))*gust;}
+  float whirlWind=0.;vec2 whirlDir=vec2(0.);for(int i=0;i<${MAX_WHIRLS};i++){vec4 a=uWhirlA[i];vec4 b=uWhirlB[i];vec2 delta=vec2(x0-a.x,z0-a.y);float dist=max(length(delta),.0001);vec2 radial=delta/dist;vec2 tangent=vec2(-radial.y,radial.x)*b.x;float core=exp(-pow(dist/max(a.z,.001),2.)*2.1);float ring=exp(-pow((dist-a.z*.55)/max(a.z*.38,.001),2.)*2.0);float pulse=.12+1.08*pow(max(0.,sin(t*1.82+b.y+float(i)*2.1)),3.4);float whirlG=(core*.70+ring*.90)*a.w*pulse;whirlWind+=whirlG;whirlDir+=(tangent+radial*.14)*whirlG;}
+  float micro=fbm(vec2(x0*.18+seed*2.8+t*.05,z0*.15-t*.18))-.5;float depth=clamp((-z0+2.)/96.,0.,1.);vFade=1.0-smoothstep(.30,.92,depth);float wind=clamp(((.50*band1+.25*band2+.18*band3+.06*band4+.24*overlap+.35*interference+.42*movingFront)*(.9+.22*field))*vFade+.08+.10*micro+packetWind*.64+whirlWind*.40,0.,2.2);vec2 layerDir=uDirA*(.52*band1)+uDirB*(.44*band2)+uDirC*(.38*band3);vec2 overlapDir=normalize(uDirA+uDirB+uDirC+vec2(.001))*(.30*overlap);vec2 shearDir=normalize(uDirB-uDirC+vec2(.001))*(band2-band3)*uInterference*.48;vec2 dirMix=uDirA*.30+layerDir+overlapDir+shearDir+packetDir*.48+whirlDir*.42+vec2(micro*.08,0.);vec2 windDir=dirMix/max(length(dirMix),1e-4);
+  float bendAmp=h*(.050+.38*wind)*pow(prog,1.55);vec3 wp=vec3(x0,prog*h,z0);wp.xz+=windDir*bendAmp;wp.x+=lean*h*prog*prog;wp.y-=h*(.018+.10*wind)*pow(prog,2.0);float taper=pow(1.-prog,.82);vec2 sideDir=normalize(vec2(cos(yaw)*.20+.82,sin(yaw)*.20));wp.xz+=sideDir*side*w*taper;vDepth=depth;vTip=prog;vWind=wind;vTone=tone;vBlur=smoothstep(0.,.18,vDepth)*(1.-smoothstep(.24,.58,vDepth));gl_Position=projectionMatrix*viewMatrix*vec4(wp,1.0);
+}`;
+const grassFS=`precision highp float;varying float vDepth;varying float vTip;varying float vWind;varying float vTone;varying float vBlur;varying float vFade;void main(){vec3 c0=vec3(.39,.56,.19),c1=vec3(.52,.69,.26),c2=vec3(.72,.81,.47);vec3 c=mix(c0,c1,.32+vTone*.30);c=mix(c,c2,smoothstep(.30,1.,vDepth));c+=vec3(.055,.06,.012)*vWind;c+=vec3(.018,.024,.004)*vTip;c=mix(c,vec3(.88,.91,.84),smoothstep(.52,1.,vDepth)*.62);c=mix(c,vec3(.64,.74,.44),vBlur*.22);c=mix(c,vec3(.86,.89,.80),1.0-vFade);float alpha=mix(.88,.06,smoothstep(.18,.90,vDepth));alpha*=vFade;alpha*=mix(1.,.70,vBlur);if(alpha<0.01)discard;gl_FragColor=vec4(c,alpha);}`;
+const grassMat=new THREE.ShaderMaterial({uniforms,vertexShader:grassVS,fragmentShader:grassFS,transparent:true,depthWrite:false,side:THREE.DoubleSide});const grassMesh=new THREE.Mesh(grassGeo,grassMat);grassMesh.frustumCulled=false;scene.add(grassMesh);
+
+const hazeGeo=new THREE.PlaneGeometry(120,26,1,1);const hazeMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,fragmentShader:`precision highp float;varying vec2 vUv;void main(){float a=pow(sin(vUv.y*3.1415926),1.35)*.16;a*=1.0-smoothstep(.74,1.0,vUv.x);gl_FragColor=vec4(.93,.95,.90,a);}`});const haze=new THREE.Mesh(hazeGeo,hazeMat);haze.position.set(0,4.7,-76);scene.add(haze);
+const foregroundGeo=new THREE.PlaneGeometry(120,24,1,1);const foregroundMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,fragmentShader:`precision highp float;varying vec2 vUv;void main(){float a=pow(1.0-vUv.y,1.7)*.22;a*=smoothstep(.05,.35,vUv.x)*(1.0-smoothstep(.65,.95,vUv.x));gl_FragColor=vec4(.75,.82,.63,a);}`});const foreground=new THREE.Mesh(foregroundGeo,foregroundMat);foreground.position.set(0,.65,-4);foreground.rotation.x=-Math.PI*.5;scene.add(foreground);
+
+const fragGeom=new THREE.BufferGeometry();fragGeom.setAttribute('position',new THREE.Float32BufferAttribute([-.10,-.035,0,-.032,.24,.014,.11,.052,-.010,-.10,-.035,0,.11,.052,-.010,.022,-.19,.012],3));fragGeom.computeVertexNormals();
+const fragMat=new THREE.MeshBasicMaterial({color:0xf4f0df,transparent:true,opacity:.70,side:THREE.DoubleSide,depthWrite:false});const FRAG_COUNT=mobile?150:280;const fragments=new THREE.InstancedMesh(fragGeom,fragMat,FRAG_COUNT);fragments.instanceMatrix.setUsage(THREE.DynamicDrawUsage);fragments.frustumCulled=false;scene.add(fragments);
+const fragColors=[0xf6f2e5,0xe8eadf,0xdedbc9,0xf0e8d3,0xdce5dd];const dummy=new THREE.Object3D();const fragItems=[];function rand(a,b){return a+Math.random()*(b-a);}function resetFrag(it,initial=false){it.x=rand(-14,14);it.z=initial?rand(6,-72):rand(7,11);it.y=initial?rand(.18,7.8):rand(.12,.75);it.vx=rand(-.18,.18);it.vz=rand(-.4,-.05);it.vy=rand(.0,.12);it.base=rand(.24,.72);it.phase=rand(0,Math.PI*2);it.phase2=rand(0,Math.PI*2);it.spin=rand(-2.0,2.0);it.tumble=rand(.72,1.8);it.age=initial?rand(0,7):0;it.rainbowEligible=Math.random()<RAINBOW_ELIGIBLE_RATE;it.rainbowCooldown=initial?rand(1,7):rand(7,14);it.rainbowing=false;}
+for(let i=0;i<FRAG_COUNT;i++){const it={};resetFrag(it,true);fragItems.push(it);fragments.setColorAt(i,new THREE.Color(fragColors[(Math.random()*fragColors.length)|0]));}fragments.instanceColor.needsUpdate=true;
+const tmpWind=new THREE.Vector2();const windSample={strength:0,lift:0};
+function sampleWind(x,z,t,out){const b1=.5+.5*Math.sin((x*dirA.x+z*dirA.y)*.086-t*.58);const b2=.5+.5*Math.sin((x*dirB.x+z*dirB.y)*.150-t*.82+.8);const b3=.5+.5*Math.sin((x*dirC.x+z*dirC.y)*.214-t*1.06+1.4);let wx=dirA.x*(.45+.34*b1)+dirB.x*(.18*b2)+dirC.x*(.12*b3);let wz=dirA.y*(.45+.34*b1)+dirB.y*(.18*b2)+dirC.y*(.12*b3);let strength=.30+.40*b1+.20*b2+.13*b3+.18*uniforms.uInterference.value;for(let i=0;i<MAX_PACKETS;i++){const p=packets[i];const dx=(x-p.x)/(p.radius*.95),dz=(z-p.z)/(p.radius*2.25);const core=Math.exp(-(dx*dx+dz*dz)*1.55);const pulse=.12+1.45*Math.pow(Math.max(0,Math.sin(t*(.98+p.speed*.075)+p.phase+i*1.41)),4);const g=core*p.strength*pulse;wx+=p.dirX*g*1.18;wz+=p.dirZ*g*1.18;strength+=g*.85;}let lift=.015+.035*strength;for(let i=0;i<MAX_WHIRLS;i++){const w=whirls[i];if(w.life<0)continue;const dx=x-w.x,dz=z-w.z,dist=Math.hypot(dx,dz),r=Math.max(w.radius,.001);const ring=Math.exp(-Math.pow((dist-r*.55)/(r*.40),2)*2);const g=ring*w.strength;const inv=1/Math.max(dist,.001);const rx=dx*inv,rz=dz*inv;wx+=(-rz*w.spin+rx*.12)*g*1.25;wz+=(rx*w.spin+rz*.12)*g*1.25;strength+=g*.55;lift+=g*.26;}const len=Math.hypot(wx,wz)||1;out.set(wx/len,wz/len);windSample.strength=Math.min(2.2,strength);windSample.lift=lift;return windSample;}
+
+// Rebuilt from exact v03: a rare fragment itself dissolves into a small rainbow Points cloud.
+const rainbowClusters=[];
+const tmpRainbowWind=new THREE.Vector2();
+const tmpRainbowColor=new THREE.Color();
+let nextRainbowTime=4.0+Math.random()*4.0;
+for(let c=0;c<MAX_RAINBOW_CLUSTERS;c++){
+  const positions=new Float32Array(RAINBOW_PARTS*3),colors=new Float32Array(RAINBOW_PARTS*3),seeds=[];
+  for(let p=0;p<RAINBOW_PARTS;p++){positions[p*3]=9999;positions[p*3+1]=9999;positions[p*3+2]=9999;seeds.push({angle:rand(0,Math.PI*2),radius:rand(.18,1),height:rand(-1,1),depth:rand(-1,1),phase:rand(0,Math.PI*2),hue:p/RAINBOW_PARTS+rand(-.04,.04)});}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
+  const mat=new THREE.PointsMaterial({size:mobile?.09:.115,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:0,depthWrite:false});
+  const points=new THREE.Points(geo,mat);points.frustumCulled=false;points.renderOrder=5;scene.add(points);
+  rainbowClusters.push({active:false,owner:-1,x:0,y:0,z:0,vx:0,vy:0,vz:0,life:0,duration:1.65,spread:.55,spin:1,hue:0,geo,mat,seeds});
+}
+function startRainbow(ownerIndex,it,t){
+  const cl=rainbowClusters.find(c=>!c.active);if(!cl)return false;
+  cl.active=true;cl.owner=ownerIndex;cl.x=it.x;cl.y=it.y;cl.z=it.z;cl.vx=it.vx;cl.vy=Math.max(.03,it.vy);cl.vz=it.vz;cl.life=0;cl.duration=rand(1.35,2.05);cl.spread=rand(.34,.62)*(0.78+it.base*.72);cl.spin=Math.random()<.5?-1:1;cl.hue=Math.random();cl.mat.opacity=0;
+  it.rainbowing=true;it.rainbowCooldown=rand(8,16);nextRainbowTime=t+rand(5.2,9.8);return true;
+}
+function finishRainbow(cl){
+  if(cl.owner>=0&&fragItems[cl.owner]){const it=fragItems[cl.owner];it.rainbowing=false;resetFrag(it,false);it.rainbowCooldown=rand(8,16);}
+  cl.active=false;cl.owner=-1;cl.mat.opacity=0;const pos=cl.geo.attributes.position.array;for(let p=0;p<RAINBOW_PARTS;p++){pos[p*3]=9999;pos[p*3+1]=9999;pos[p*3+2]=9999;}cl.geo.attributes.position.needsUpdate=true;
+}
+function updateRainbowClusters(dt,t){
+  const motion=reduced?.18:1;
+  for(const cl of rainbowClusters){if(!cl.active)continue;cl.life+=dt;
+    const wind=sampleWind(cl.x,cl.z,t,tmpRainbowWind),inertia=Math.min(1,dt*(1.8+wind.strength*1.5)),targetSpeed=1.65+wind.strength*3.55;
+    cl.vx+=(tmpRainbowWind.x*targetSpeed-cl.vx)*inertia;cl.vz+=(tmpRainbowWind.y*targetSpeed-cl.vz)*inertia;cl.vy+=(wind.lift*.72+.018-cl.vy*.24)*dt;cl.x+=cl.vx*dt*motion;cl.z+=cl.vz*dt*motion;cl.y+=cl.vy*dt*motion;
+    if(cl.life>=cl.duration||cl.z<-95||Math.abs(cl.x)>44||cl.y>13.3){finishRainbow(cl);continue;}
+    const u=cl.life/cl.duration,fadeIn=Math.min(1,cl.life/.16),fadeOut=Math.min(1,(cl.duration-cl.life)/.42),fade=Math.max(0,Math.min(fadeIn,fadeOut)),open=1-Math.pow(1-u,2.2),pos=cl.geo.attributes.position.array,col=cl.geo.attributes.color.array;
+    for(let p=0;p<RAINBOW_PARTS;p++){const seed=cl.seeds[p],o=p*3,radius=(.025+cl.spread*open)*seed.radius,angle=seed.angle+cl.spin*cl.life*(1.0+.72*seed.radius)+Math.sin(t*.72+seed.phase)*.16,wake=open*.34*seed.radius;
+      pos[o]=cl.x+Math.cos(angle)*radius-tmpRainbowWind.x*wake;pos[o+1]=cl.y+Math.sin(angle*1.29)*radius*.72+seed.height*radius*.30+Math.sin(t*1.5+seed.phase)*.018;pos[o+2]=cl.z+Math.sin(angle*.71+seed.phase)*radius*.46+seed.depth*radius*.22-tmpRainbowWind.y*wake;
+      const hue=(cl.hue+seed.hue*.82+t*.014)%1;tmpRainbowColor.setHSL(hue,.72,.60);col[o]=tmpRainbowColor.r;col[o+1]=tmpRainbowColor.g;col[o+2]=tmpRainbowColor.b;}
+    cl.mat.opacity=.78*fade;cl.geo.attributes.position.needsUpdate=true;cl.geo.attributes.color.needsUpdate=true;}
+}
+
+function updateFragments(dt,t){
+  const motion=reduced?.20:1;let candidate=-1,candidateScore=.96;
+  for(let i=0;i<FRAG_COUNT;i++){const it=fragItems[i];
+    if(it.rainbowing){dummy.position.set(9999,9999,9999);dummy.scale.setScalar(0);dummy.updateMatrix();fragments.setMatrixAt(i,dummy.matrix);continue;}
+    const wind=sampleWind(it.x,it.z,t,tmpWind);it.rainbowCooldown-=dt;const inertia=Math.min(1,dt*(1.7+wind.strength*1.5)),targetSpeed=1.5+wind.strength*3.4;
+    it.vx+=(tmpWind.x*targetSpeed-it.vx)*inertia;it.vz+=(tmpWind.y*targetSpeed-it.vz)*inertia;const flutterLift=Math.sin(t*1.6+it.phase)*.035+Math.sin(t*.63+it.phase2)*.022;it.vy+=(wind.lift+flutterLift-it.vy*.28)*dt;it.x+=it.vx*dt*motion;it.z+=it.vz*dt*motion;it.y+=it.vy*dt*motion;it.age+=dt;
+    if(it.z<-94||it.z>12||Math.abs(it.x)>42||it.y>13.0||it.y<-.15||it.age>24){resetFrag(it,false);continue;}
+    if(!reduced&&t>=nextRainbowTime&&it.rainbowEligible&&it.rainbowCooldown<=0&&it.age>.8&&it.z>-48&&it.z<7&&it.y>.28&&it.y<9.4&&wind.strength>candidateScore){candidate=i;candidateScore=wind.strength;}
+    const flutter=Math.sin(t*it.tumble*2.25+it.phase);dummy.position.set(it.x,it.y,it.z);dummy.rotation.set(Math.sin(t*.72+it.phase2)*.72,t*it.spin*.53+it.phase,flutter*1.05+Math.sin(t*.39+it.phase2)*.28);const sc=it.base*(.92+.10*flutter);dummy.scale.set(sc*(.70+.18*Math.sin(it.phase2)),sc*(1.08+.16*Math.sin(it.phase)),1);dummy.updateMatrix();fragments.setMatrixAt(i,dummy.matrix);}
+  if(candidate>=0&&rainbowClusters.some(c=>!c.active)&&startRainbow(candidate,fragItems[candidate],t)){dummy.position.set(9999,9999,9999);dummy.scale.setScalar(0);dummy.updateMatrix();fragments.setMatrixAt(candidate,dummy.matrix);}fragments.instanceMatrix.needsUpdate=true;
+}
+
+function resize(){const w=hero.clientWidth,h=hero.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}addEventListener('resize',resize,{passive:true});resize();
+const clock=new THREE.Clock();let elapsed=0;renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);elapsed+=dt;uniforms.uTime.value=elapsed;updateLayerDirections(elapsed);updateInterference(dt,elapsed);updatePackets(dt,elapsed);updateWhirls(dt,elapsed);updateFragments(dt,elapsed);updateRainbowClusters(dt,elapsed);renderer.render(scene,camera);});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)clock.getDelta();});
+</script>
+</body>
+</html>
