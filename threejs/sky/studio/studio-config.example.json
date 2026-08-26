@@ -1,0 +1,139 @@
+{
+  "schemaVersion": "living-field-studio-1",
+  "name": "v12 Baseline",
+  "source": "threejs/sky/v12/index.html",
+  "note": "Initial handoff values. Codex must audit and refine these against the v12 source before declaring visual parity.",
+  "seed": 12012,
+  "scene": {
+    "camera": {
+      "fov": 36,
+      "near": 0.05,
+      "far": 140,
+      "position": [0, 2.0, 8.8],
+      "lookAt": [0, 0.58, -45]
+    },
+    "horizonRatio": 0.59,
+    "hazeStrength": 0.56,
+    "lightSpread": 0.7
+  },
+  "wind": {
+    "motion": 1.0,
+    "baseDirectionDegrees": 0,
+    "directionMix": 1.0,
+    "largeWaveStrength": 1.0,
+    "packetCount": 5,
+    "packetStrength": 1.0,
+    "packetRadius": 1.0,
+    "packetSpeed": 1.0,
+    "whirlCount": 2,
+    "whirlStrength": 1.0,
+    "interferenceStrength": 1.0,
+    "coupling": {
+      "meadow": 1.0,
+      "sky": 0.65,
+      "ordinaryFlyers": 0.9,
+      "rainbowFlocks": 0.85
+    }
+  },
+  "meadow": {
+    "bladeCount": {
+      "desktop": 52000,
+      "mobile": 26000
+    },
+    "heightMean": 0.4,
+    "heightVariation": 0.24,
+    "widthMean": 0.015,
+    "windSensitivity": 1.0,
+    "farFade": 1.0,
+    "colors": {
+      "near": "#668f33",
+      "mid": "#8fb54c",
+      "far": "#b8ce7a"
+    }
+  },
+  "sky": {
+    "density": 1.0,
+    "contrast": 1.0,
+    "flowSpeed": 1.0,
+    "gustResponse": 1.0,
+    "whirlResponse": 1.0,
+    "horizonHaze": 1.0,
+    "upperColor": "#c7e0ee",
+    "horizonColor": "#eef4f3"
+  },
+  "ordinaryFlyers": {
+    "count": {
+      "desktop": 280,
+      "mobile": 150
+    },
+    "minScale": 0.24,
+    "maxScale": 0.72,
+    "opacity": 0.7,
+    "inertia": 1.0,
+    "liftSensitivity": 1.0,
+    "flutterIntensity": 1.0,
+    "palette": [
+      "#f6f2e5",
+      "#e8eadf",
+      "#dedbc9",
+      "#f0e8d3",
+      "#dce5dd"
+    ]
+  },
+  "rainbowFlocks": {
+    "groupCount": {
+      "desktop": 7,
+      "mobile": 4
+    },
+    "initialGroupCount": 3,
+    "flyersPerGroup": {
+      "desktop": 14,
+      "mobile": 10
+    },
+    "spawnIntervalSeconds": {
+      "min": 1.4,
+      "max": 2.3
+    },
+    "lifetimeSeconds": {
+      "min": 6.2,
+      "max": 8.4
+    },
+    "spread": {
+      "min": 0.58,
+      "max": 0.84
+    },
+    "flyerScale": {
+      "min": 0.12,
+      "max": 0.44,
+      "distributionBias": 1.25
+    },
+    "opacity": 1.0,
+    "windFollowing": 1.0,
+    "palette": [
+      "#ff304f",
+      "#ff8a1f",
+      "#ffd62e",
+      "#28d76f",
+      "#22c8e8",
+      "#3478ff",
+      "#b742ff"
+    ],
+    "spawn": {
+      "x": [-10, 10],
+      "y": [2.0, 5.5],
+      "z": [-20, 2],
+      "gridColumns": 4,
+      "gridRows": 3,
+      "strategy": "stratified-shuffle"
+    }
+  },
+  "quality": {
+    "pixelRatioCap": {
+      "desktop": 1.6,
+      "mobile": 1.2
+    },
+    "maxFps": 60,
+    "pauseWhenHidden": true,
+    "respectReducedMotion": true
+  }
+}
