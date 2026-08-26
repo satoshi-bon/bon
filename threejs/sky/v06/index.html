@@ -16,7 +16,7 @@ body{font-family:Inter,"Helvetica Neue",Arial,"Hiragino Sans","Yu Gothic",sans-s
 #hero::after{content:"";position:absolute;left:-8%;right:-8%;top:59%;height:15%;z-index:1;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.56) 48%,rgba(255,255,255,0));filter:blur(20px)}
 canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:2}
 .copy{position:absolute;left:clamp(28px,4.8vw,78px);top:clamp(36px,7vh,84px);z-index:4;color:var(--ink);pointer-events:none;max-width:min(660px,84vw)}
-.kicker{margin:0 0 16px;font-size:3.0*(clamp(10px),1vw,13px);font-weight:700;letter-spacing:.19em;text-transform:uppercase;color:var(--muted)}
+.kicker{margin:0 0 16px;font-size:clamp(10px,1vw,13px);font-weight:700;letter-spacing:.19em;text-transform:uppercase;color:var(--muted)}
 h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:610;letter-spacing:-.04em;text-shadow:0 8px 28px rgba(33,55,43,.06)}
 .sub{margin:0;font-size:clamp(12px,1.18vw,17px);line-height:1.7;letter-spacing:.02em;color:rgba(255,255,255,.76);text-shadow:0 4px 12px rgba(31,52,41,.05)}
 .tech{position:absolute;right:clamp(16px,2.6vw,32px);bottom:clamp(16px,2.4vw,26px);z-index:4;padding:8px 11px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.05);backdrop-filter:blur(8px);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);pointer-events:none}
@@ -224,7 +224,7 @@ for(let c=0;c<MAX_RAINBOW_CLUSTERS;c++){
   const positions=new Float32Array(RAINBOW_PARTS*3),colors=new Float32Array(RAINBOW_PARTS*3),seeds=[];
   for(let p=0;p<RAINBOW_PARTS;p++){positions[p*3]=9999;positions[p*3+1]=9999;positions[p*3+2]=9999;seeds.push({angle:rand(0,Math.PI*2),radius:rand(.18,1),height:rand(-1,1),depth:rand(-1,1),phase:rand(0,Math.PI*2),hue:p/RAINBOW_PARTS+rand(-.04,.04)});}
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
-  const mat=new THREE.PointsMaterial({size:mobile?.09:.115,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:0,depthWrite:false});
+  const mat=new THREE.PointsMaterial({size:mobile?.27:.345,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:0,depthWrite:false});
   const points=new THREE.Points(geo,mat);points.frustumCulled=false;points.renderOrder=5;scene.add(points);
   rainbowClusters.push({active:false,owner:-1,x:0,y:0,z:0,vx:0,vy:0,vz:0,life:0,duration:1.65,spread:.55,spin:1,hue:0,geo,mat,seeds});
 }
