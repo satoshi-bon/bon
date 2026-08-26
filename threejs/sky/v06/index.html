@@ -27,7 +27,7 @@ h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:
 </style>
 </head>
 <body>
-<main id="hero" aria-label="v05の草原と同じ風場が草・飛翔体・空を動かし、一部の飛翔体だけが時折虹色のパーティクル集合へほどける分岐案">
+<main id="hero" aria-label="草・空・飛翔体が同じ風場で動き、一部の飛翔体そのものが同じ重心と軌道を保ったまま彩度の高い虹色の粒子群へ変形するv06">
   <canvas id="webgl"></canvas>
   <section class="copy">
     <p class="kicker">Architectural Informatics Lab.</p>
@@ -35,7 +35,7 @@ h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:
     <p class="sub">Yamada Satoshi Lab. / Ritsumeikan University</p>
   </section>
   <div class="version">BRANCH · v06 · responsive sky × richer rainbow morph</div>
-  <div class="change">v05を基礎に発展 ／ 虹色パーティクルクラスタを少し増量 ／ rainbow particle size ×3</div>
+  <div class="change">v06 ／ 飛翔体そのものが虹色の粒子群へ変形 ／ 同一重心・同一軌道 ／ compact vivid rainbow swarm</div>
   <div class="tech">Three.js · GLSL · shared wind field · v06</div>
   <div id="error">WebGL の初期化に失敗しました。</div>
 </main>
@@ -215,50 +215,41 @@ for(let i=0;i<FRAG_COUNT;i++){const it={};resetFrag(it,true);fragItems.push(it);
 const tmpWind=new THREE.Vector2();const windSample={strength:0,lift:0};
 function sampleWind(x,z,t,out){const b1=.5+.5*Math.sin((x*dirA.x+z*dirA.y)*.086-t*.58);const b2=.5+.5*Math.sin((x*dirB.x+z*dirB.y)*.150-t*.82+.8);const b3=.5+.5*Math.sin((x*dirC.x+z*dirC.y)*.214-t*1.06+1.4);let wx=dirA.x*(.45+.34*b1)+dirB.x*(.18*b2)+dirC.x*(.12*b3);let wz=dirA.y*(.45+.34*b1)+dirB.y*(.18*b2)+dirC.y*(.12*b3);let strength=.30+.40*b1+.20*b2+.13*b3+.18*uniforms.uInterference.value;for(let i=0;i<MAX_PACKETS;i++){const p=packets[i];const dx=(x-p.x)/(p.radius*.95),dz=(z-p.z)/(p.radius*2.25);const core=Math.exp(-(dx*dx+dz*dz)*1.55);const pulse=.12+1.45*Math.pow(Math.max(0,Math.sin(t*(.98+p.speed*.075)+p.phase+i*1.41)),4);const g=core*p.strength*pulse;wx+=p.dirX*g*1.18;wz+=p.dirZ*g*1.18;strength+=g*.85;}let lift=.015+.035*strength;for(let i=0;i<MAX_WHIRLS;i++){const w=whirls[i];if(w.life<0)continue;const dx=x-w.x,dz=z-w.z,dist=Math.hypot(dx,dz),r=Math.max(w.radius,.001);const ring=Math.exp(-Math.pow((dist-r*.55)/(r*.40),2)*2);const g=ring*w.strength;const inv=1/Math.max(dist,.001);const rx=dx*inv,rz=dz*inv;wx+=(-rz*w.spin+rx*.12)*g*1.25;wz+=(rx*w.spin+rz*.12)*g*1.25;strength+=g*.55;lift+=g*.26;}const len=Math.hypot(wx,wz)||1;out.set(wx/len,wz/len);windSample.strength=Math.min(2.2,strength);windSample.lift=lift;return windSample;}
 
-// Rebuilt from exact v03: a rare fragment itself dissolves into a small rainbow Points cloud.
+// v06 refinement: the fragment itself morphs into one compact, vivid rainbow swarm.
+// The fragment item remains the single source of truth for position and velocity during the morph.
 const rainbowClusters=[];
-const tmpRainbowWind=new THREE.Vector2();
 const tmpRainbowColor=new THREE.Color();
 let nextRainbowTime=4.0+Math.random()*4.0;
 for(let c=0;c<MAX_RAINBOW_CLUSTERS;c++){
   const positions=new Float32Array(RAINBOW_PARTS*3),colors=new Float32Array(RAINBOW_PARTS*3),seeds=[];
-  for(let p=0;p<RAINBOW_PARTS;p++){positions[p*3]=9999;positions[p*3+1]=9999;positions[p*3+2]=9999;seeds.push({angle:rand(0,Math.PI*2),radius:rand(.18,1),height:rand(-1,1),depth:rand(-1,1),phase:rand(0,Math.PI*2),hue:p/RAINBOW_PARTS+rand(-.04,.04)});}
+  for(let p=0;p<RAINBOW_PARTS;p++){
+    positions[p*3]=9999;positions[p*3+1]=9999;positions[p*3+2]=9999;
+    seeds.push({angle:rand(0,Math.PI*2),radius:.08+.92*Math.pow(Math.random(),1.75),height:rand(-1,1),depth:rand(-1,1),phase:rand(0,Math.PI*2),hue:(p/RAINBOW_PARTS+rand(-.025,.025)+1)%1});
+  }
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
   const mat=new THREE.PointsMaterial({size:mobile?.27:.345,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:0,depthWrite:false});
   const points=new THREE.Points(geo,mat);points.frustumCulled=false;points.renderOrder=5;scene.add(points);
-  rainbowClusters.push({active:false,owner:-1,x:0,y:0,z:0,vx:0,vy:0,vz:0,life:0,duration:1.65,spread:.55,spin:1,hue:0,geo,mat,seeds});
+  rainbowClusters.push({active:false,owner:-1,life:0,duration:1.8,spread:.26,spin:1,hue:0,geo,mat,seeds});
 }
-function startRainbow(ownerIndex,it,t){
-  const cl=rainbowClusters.find(c=>!c.active);if(!cl)return false;
-  cl.active=true;cl.owner=ownerIndex;cl.x=it.x;cl.y=it.y;cl.z=it.z;cl.vx=it.vx;cl.vy=Math.max(.03,it.vy);cl.vz=it.vz;cl.life=0;cl.duration=rand(1.35,2.05);cl.spread=rand(.34,.62)*(0.78+it.base*.72);cl.spin=Math.random()<.5?-1:1;cl.hue=Math.random();cl.mat.opacity=0;
-  it.rainbowing=true;it.rainbowCooldown=rand(8,16);nextRainbowTime=t+rand(5.2,9.8);return true;
-}
-function finishRainbow(cl){
-  if(cl.owner>=0&&fragItems[cl.owner]){const it=fragItems[cl.owner];it.rainbowing=false;resetFrag(it,false);it.rainbowCooldown=rand(8,16);}
-  cl.active=false;cl.owner=-1;cl.mat.opacity=0;const pos=cl.geo.attributes.position.array;for(let p=0;p<RAINBOW_PARTS;p++){pos[p*3]=9999;pos[p*3+1]=9999;pos[p*3+2]=9999;}cl.geo.attributes.position.needsUpdate=true;
-}
+function clearRainbowGeometry(cl){const pos=cl.geo.attributes.position.array;for(let p=0;p<RAINBOW_PARTS;p++){pos[p*3]=9999;pos[p*3+1]=9999;pos[p*3+2]=9999;}cl.geo.attributes.position.needsUpdate=true;}
+function startRainbow(ownerIndex,it,t){const cl=rainbowClusters.find(c=>!c.active);if(!cl)return false;cl.active=true;cl.owner=ownerIndex;cl.life=0;cl.duration=rand(1.55,2.15);cl.spread=rand(.20,.29)*(0.86+it.base*.34);cl.spin=Math.random()<.5?-1:1;cl.hue=Math.random();cl.mat.opacity=0;it.rainbowing=true;it.rainbowCooldown=rand(9,17);nextRainbowTime=t+rand(5.0,9.0);return true;}
+function finishRainbow(cl){if(cl.owner>=0&&fragItems[cl.owner]){const it=fragItems[cl.owner];it.rainbowing=false;it.rainbowCooldown=rand(9,17);}cl.active=false;cl.owner=-1;cl.mat.opacity=0;clearRainbowGeometry(cl);}
 function updateRainbowClusters(dt,t){
-  const motion=reduced?.18:1;
-  for(const cl of rainbowClusters){if(!cl.active)continue;cl.life+=dt;
-    const wind=sampleWind(cl.x,cl.z,t,tmpRainbowWind),inertia=Math.min(1,dt*(1.8+wind.strength*1.5)),targetSpeed=1.65+wind.strength*3.55;
-    cl.vx+=(tmpRainbowWind.x*targetSpeed-cl.vx)*inertia;cl.vz+=(tmpRainbowWind.y*targetSpeed-cl.vz)*inertia;cl.vy+=(wind.lift*.72+.018-cl.vy*.24)*dt;cl.x+=cl.vx*dt*motion;cl.z+=cl.vz*dt*motion;cl.y+=cl.vy*dt*motion;
-    if(cl.life>=cl.duration||cl.z<-95||Math.abs(cl.x)>44||cl.y>13.3){finishRainbow(cl);continue;}
-    const u=cl.life/cl.duration,fadeIn=Math.min(1,cl.life/.16),fadeOut=Math.min(1,(cl.duration-cl.life)/.42),fade=Math.max(0,Math.min(fadeIn,fadeOut)),open=1-Math.pow(1-u,2.2),pos=cl.geo.attributes.position.array,col=cl.geo.attributes.color.array;
-    for(let p=0;p<RAINBOW_PARTS;p++){const seed=cl.seeds[p],o=p*3,radius=(.025+cl.spread*open)*seed.radius,angle=seed.angle+cl.spin*cl.life*(1.0+.72*seed.radius)+Math.sin(t*.72+seed.phase)*.16,wake=open*.34*seed.radius;
-      pos[o]=cl.x+Math.cos(angle)*radius-tmpRainbowWind.x*wake;pos[o+1]=cl.y+Math.sin(angle*1.29)*radius*.72+seed.height*radius*.30+Math.sin(t*1.5+seed.phase)*.018;pos[o+2]=cl.z+Math.sin(angle*.71+seed.phase)*radius*.46+seed.depth*radius*.22-tmpRainbowWind.y*wake;
-      const hue=(cl.hue+seed.hue*.82+t*.014)%1;tmpRainbowColor.setHSL(hue,.72,.60);col[o]=tmpRainbowColor.r;col[o+1]=tmpRainbowColor.g;col[o+2]=tmpRainbowColor.b;}
-    cl.mat.opacity=.78*fade;cl.geo.attributes.position.needsUpdate=true;cl.geo.attributes.color.needsUpdate=true;}
+  for(const cl of rainbowClusters){if(!cl.active)continue;const it=fragItems[cl.owner];if(!it||!it.rainbowing){finishRainbow(cl);continue;}cl.life+=dt;if(cl.life>=cl.duration){finishRainbow(cl);continue;}
+    const u=cl.life/cl.duration,fadeIn=Math.min(1,cl.life/.14),fadeOut=Math.min(1,(cl.duration-cl.life)/.34),fade=Math.max(0,Math.min(fadeIn,fadeOut));
+    const speed=Math.hypot(it.vx,it.vz)||1,dirX=it.vx/speed,dirZ=it.vz/speed,sideX=-dirZ,sideZ=dirX;
+    const compact=.74+.26*Math.sin(Math.min(1,u)*Math.PI*.5),breathe=.96+.055*Math.sin(t*2.1+cl.hue*6.283),pos=cl.geo.attributes.position.array,col=cl.geo.attributes.color.array;
+    for(let p=0;p<RAINBOW_PARTS;p++){const seed=cl.seeds[p],o=p*3,angle=seed.angle+cl.spin*cl.life*(.58+.42*seed.radius)+Math.sin(t*.66+seed.phase)*.075,radius=cl.spread*seed.radius*compact*breathe,along=Math.cos(angle)*radius*1.12+seed.depth*radius*.16,side=Math.sin(angle)*radius*.58;pos[o]=it.x+dirX*along+sideX*side;pos[o+1]=it.y+seed.height*radius*.52+Math.sin(t*1.35+seed.phase)*radius*.075;pos[o+2]=it.z+dirZ*along+sideZ*side;const hue=(seed.hue+cl.hue*.11+t*.012)%1,light=.50+.07*Math.sin(seed.phase+t*.25);tmpRainbowColor.setHSL(hue,.98,light);col[o]=tmpRainbowColor.r;col[o+1]=tmpRainbowColor.g;col[o+2]=tmpRainbowColor.b;}
+    cl.mat.opacity=.96*fade;cl.geo.attributes.position.needsUpdate=true;cl.geo.attributes.color.needsUpdate=true;
+  }
 }
-
 function updateFragments(dt,t){
   const motion=reduced?.20:1;let candidate=-1,candidateScore=.96;
-  for(let i=0;i<FRAG_COUNT;i++){const it=fragItems[i];
-    if(it.rainbowing){dummy.position.set(9999,9999,9999);dummy.scale.setScalar(0);dummy.updateMatrix();fragments.setMatrixAt(i,dummy.matrix);continue;}
-    const wind=sampleWind(it.x,it.z,t,tmpWind);it.rainbowCooldown-=dt;const inertia=Math.min(1,dt*(1.7+wind.strength*1.5)),targetSpeed=1.5+wind.strength*3.4;
-    it.vx+=(tmpWind.x*targetSpeed-it.vx)*inertia;it.vz+=(tmpWind.y*targetSpeed-it.vz)*inertia;const flutterLift=Math.sin(t*1.6+it.phase)*.035+Math.sin(t*.63+it.phase2)*.022;it.vy+=(wind.lift+flutterLift-it.vy*.28)*dt;it.x+=it.vx*dt*motion;it.z+=it.vz*dt*motion;it.y+=it.vy*dt*motion;it.age+=dt;
-    if(it.z<-94||it.z>12||Math.abs(it.x)>42||it.y>13.0||it.y<-.15||it.age>24){resetFrag(it,false);continue;}
-    if(!reduced&&t>=nextRainbowTime&&it.rainbowEligible&&it.rainbowCooldown<=0&&it.age>.8&&it.z>-48&&it.z<7&&it.y>.28&&it.y<9.4&&wind.strength>candidateScore){candidate=i;candidateScore=wind.strength;}
-    const flutter=Math.sin(t*it.tumble*2.25+it.phase);dummy.position.set(it.x,it.y,it.z);dummy.rotation.set(Math.sin(t*.72+it.phase2)*.72,t*it.spin*.53+it.phase,flutter*1.05+Math.sin(t*.39+it.phase2)*.28);const sc=it.base*(.92+.10*flutter);dummy.scale.set(sc*(.70+.18*Math.sin(it.phase2)),sc*(1.08+.16*Math.sin(it.phase)),1);dummy.updateMatrix();fragments.setMatrixAt(i,dummy.matrix);}
+  for(let i=0;i<FRAG_COUNT;i++){const it=fragItems[i],wind=sampleWind(it.x,it.z,t,tmpWind);it.rainbowCooldown-=dt;const inertia=Math.min(1,dt*(1.7+wind.strength*1.5)),targetSpeed=1.5+wind.strength*3.4;it.vx+=(tmpWind.x*targetSpeed-it.vx)*inertia;it.vz+=(tmpWind.y*targetSpeed-it.vz)*inertia;const flutterLift=Math.sin(t*1.6+it.phase)*.035+Math.sin(t*.63+it.phase2)*.022;it.vy+=(wind.lift+flutterLift-it.vy*.28)*dt;it.x+=it.vx*dt*motion;it.z+=it.vz*dt*motion;it.y+=it.vy*dt*motion;it.age+=dt;
+    if(it.z<-94||it.z>12||Math.abs(it.x)>42||it.y>13.0||it.y<-.15||it.age>24){const owned=rainbowClusters.find(c=>c.active&&c.owner===i);if(owned)finishRainbow(owned);resetFrag(it,false);continue;}
+    if(!it.rainbowing&&!reduced&&t>=nextRainbowTime&&it.rainbowEligible&&it.rainbowCooldown<=0&&it.age>.8&&it.z>-48&&it.z<7&&it.y>.28&&it.y<9.4&&wind.strength>candidateScore){candidate=i;candidateScore=wind.strength;}
+    if(it.rainbowing){dummy.position.set(9999,9999,9999);dummy.scale.setScalar(0);dummy.updateMatrix();fragments.setMatrixAt(i,dummy.matrix);}else{const flutter=Math.sin(t*it.tumble*2.25+it.phase);dummy.position.set(it.x,it.y,it.z);dummy.rotation.set(Math.sin(t*.72+it.phase2)*.72,t*it.spin*.53+it.phase,flutter*1.05+Math.sin(t*.39+it.phase2)*.28);const sc=it.base*(.92+.10*flutter);dummy.scale.set(sc*(.70+.18*Math.sin(it.phase2)),sc*(1.08+.16*Math.sin(it.phase)),1);dummy.updateMatrix();fragments.setMatrixAt(i,dummy.matrix);}
+  }
   if(candidate>=0&&rainbowClusters.some(c=>!c.active)&&startRainbow(candidate,fragItems[candidate],t)){dummy.position.set(9999,9999,9999);dummy.scale.setScalar(0);dummy.updateMatrix();fragments.setMatrixAt(candidate,dummy.matrix);}fragments.instanceMatrix.needsUpdate=true;
 }
 
