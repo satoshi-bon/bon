@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Living Field v07 -->
+<!-- Living Field v08 -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -29,15 +29,17 @@ h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:
 <main id="hero" aria-label="手前は非常に密な草、中景はやや低密度で半透明、遠景は個々の草が段々と消えて面になり、手前には風に沿う光の筋が走る草原">
 <canvas id="webgl"></canvas>
 <section class="copy"><p class="kicker">Architectural Informatics Lab.</p><h1>Wide horizon.<br>Living field.</h1><p class="sub">Yamada Satoshi Lab. / Ritsumeikan University</p></section>
-<div class="version">Living Field v07 · 2026.08.26</div>
-<div class="change">前景光筋 ／ 密度勾配維持 ／ 風連動</div>
-<div class="tech">Three.js · GLSL · instanced meadow · v07</div>
+<div class="version">Living Field v08 · 2026.08.26</div>
+<div class="change">PC 約4倍速 ／ タッチ端末 従来速度 ／ 前景光筋</div>
+<div class="tech">Three.js · GLSL · instanced meadow · v08</div>
 <div id="error">WebGL の初期化に失敗しました。</div>
 </main>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js';
 const hero=document.getElementById('hero'),canvas=document.getElementById('webgl'),errorBox=document.getElementById('error');
 const mobile=matchMedia('(max-width:760px)').matches,reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const desktopMotion=matchMedia('(hover:hover) and (pointer:fine)').matches;
+const motionScale=reduced?.22:(desktopMotion?4:1);
 const MAX_PACKETS=5,MAX_WHIRLS=2;
 let renderer;try{renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance',premultipliedAlpha:false})}catch(e){errorBox.style.display='flex';throw e}
 renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.2:1.6));
@@ -51,7 +53,7 @@ function updateDirs(t){[dirA,dirB,dirC].forEach((v,i)=>setDir(v,ds[i].base+ds[i]
 function resetPacket(p,initial=false){const f=Math.random();let a=f<.5?(Math.random()-.5)*.50:(f<.75?.52+Math.random()*.66:-1.18+Math.random()*.66);p.x=(Math.random()-.5)*38;p.z=initial?(7-Math.random()*92):(8+Math.random()*10);p.radius=5.6+Math.random()*9.6;p.strength=.22+Math.random()*.72;p.dirX=Math.sin(a);p.dirZ=-Math.cos(a);p.speed=5.5+Math.random()*6.5;p.wander=(Math.random()-.5)*.82;p.phase=Math.random()*6.283}
 function resetWhirl(w,initial=false){w.x=(Math.random()-.5)*29;w.z=initial?(4-Math.random()*82):(8+Math.random()*12);w.radius=2.3+Math.random()*4.5;w.strength=.20+Math.random()*.46;w.spin=Math.random()<.5?-1:1;w.driftX=(Math.random()-.5)*.70;w.speed=2.8+Math.random()*3.5;w.phase=Math.random()*6.283;w.life=-(initial?Math.random()*6:2.8+Math.random()*8.5);w.lifeMax=3+Math.random()*3}
 packets.forEach(p=>resetPacket(p,true));whirls.forEach(w=>resetWhirl(w,true));
-const uniforms={uTime:{value:0},uMotion:{value:reduced?.22:1},uPacketA:{value:packetA},uPacketB:{value:packetB},uWhirlA:{value:whirlA},uWhirlB:{value:whirlB},uDirA:{value:dirA},uDirB:{value:dirB},uDirC:{value:dirC},uInterference:{value:0}};
+const uniforms={uTime:{value:0},uMotion:{value:1},uPacketA:{value:packetA},uPacketB:{value:packetB},uWhirlA:{value:whirlA},uWhirlB:{value:whirlB},uDirA:{value:dirA},uDirB:{value:dirB},uDirC:{value:dirC},uInterference:{value:0}};
 let interference=false,nextInterference=5+Math.random()*8,interferenceEnd=0;
 function updateInterference(dt,t){if(!interference&&t>=nextInterference){interference=true;interferenceEnd=t+2+Math.random()*3.2}if(interference&&t>=interferenceEnd){interference=false;nextInterference=t+7+Math.random()*13}const trg=interference?1:0;uniforms.uInterference.value+=(trg-uniforms.uInterference.value)*Math.min(1,dt*(interference?2.8:2))}
 function updatePackets(dt,t){for(let i=0;i<MAX_PACKETS;i++){const p=packets[i],w=Math.sin(t*.55+p.phase)*p.wander;p.x+=(p.dirX*p.speed+w)*dt;p.z+=p.dirZ*p.speed*dt;if(p.z<-96||Math.abs(p.x)>48)resetPacket(p,false);packetA[i].set(p.x,p.z,p.radius,p.strength);packetB[i].set(p.dirX,p.dirZ,p.speed,p.phase)}}
@@ -72,7 +74,7 @@ const grassFS=`precision highp float;varying float vDepth;varying float vTip;var
 const grass=new THREE.Mesh(grassGeo,new THREE.ShaderMaterial({uniforms,vertexShader:grassVS,fragmentShader:grassFS,transparent:true,depthWrite:false,side:THREE.DoubleSide}));grass.frustumCulled=false;scene.add(grass);
 const hazeGeo=new THREE.PlaneGeometry(120,26),haze=new THREE.Mesh(hazeGeo,new THREE.ShaderMaterial({transparent:true,depthWrite:false,vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`precision highp float;varying vec2 vUv;void main(){float a=pow(sin(vUv.y*3.1415926),1.35)*.16;a*=1.-smoothstep(.74,1.,vUv.x);gl_FragColor=vec4(.93,.95,.90,a);}`}));haze.position.set(0,4.7,-76);scene.add(haze);
 function resize(){const w=hero.clientWidth,h=hero.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}addEventListener('resize',resize,{passive:true});resize();
-const clock=new THREE.Clock();let elapsed=0;renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);elapsed+=dt;uniforms.uTime.value=elapsed;updateDirs(elapsed);updateInterference(dt,elapsed);updatePackets(dt,elapsed);updateWhirls(dt,elapsed);renderer.render(scene,camera)});document.addEventListener('visibilitychange',()=>{if(!document.hidden)clock.getDelta()});
+const clock=new THREE.Clock();let elapsed=0;renderer.setAnimationLoop(()=>{const realDt=Math.min(clock.getDelta(),.05),dt=realDt*motionScale;elapsed+=dt;uniforms.uTime.value=elapsed;updateDirs(elapsed);updateInterference(dt,elapsed);updatePackets(dt,elapsed);updateWhirls(dt,elapsed);renderer.render(scene,camera)});document.addEventListener('visibilitychange',()=>{if(!document.hidden)clock.getDelta()});
 </script>
 </body>
 </html>
