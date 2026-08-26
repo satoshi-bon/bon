@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Living Field branch: v05 meadow + skyborne + responsive sky + occasional rainbow particles / branch 04 -->
+<!-- Living Field branch: v05 meadow + skyborne + responsive sky / branch 03 -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -21,22 +21,22 @@ h1{margin:0 0 18px;font-size:clamp(38px,6.5vw,88px);line-height:.92;font-weight:
 .sub{margin:0;font-size:clamp(12px,1.18vw,17px);line-height:1.7;letter-spacing:.02em;color:rgba(255,255,255,.76);text-shadow:0 4px 12px rgba(31,52,41,.05)}
 .tech{position:absolute;right:clamp(16px,2.6vw,32px);bottom:clamp(16px,2.4vw,26px);z-index:4;padding:8px 11px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.05);backdrop-filter:blur(8px);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);pointer-events:none}
 .version{position:absolute;right:clamp(16px,2.6vw,32px);top:clamp(14px,2.2vw,28px);z-index:5;padding:7px 10px;border:1px solid rgba(255,255,255,.30);border-radius:999px;background:rgba(255,255,255,.12);backdrop-filter:blur(8px);font-size:10px;font-weight:700;letter-spacing:.10em;color:rgba(255,255,255,.86);pointer-events:none}
-.change{position:absolute;right:clamp(16px,2.6vw,32px);top:clamp(48px,5.0vw,62px);z-index:5;max-width:min(600px,80vw);text-align:right;font-size:9px;font-weight:650;line-height:1.5;letter-spacing:.09em;color:rgba(255,255,255,.72);text-shadow:0 2px 8px rgba(30,50,40,.08);pointer-events:none}
+.change{position:absolute;right:clamp(16px,2.6vw,32px);top:clamp(48px,5.0vw,62px);z-index:5;max-width:min(560px,78vw);text-align:right;font-size:9px;font-weight:650;line-height:1.5;letter-spacing:.09em;color:rgba(255,255,255,.72);text-shadow:0 2px 8px rgba(30,50,40,.08);pointer-events:none}
 #error{display:none;position:absolute;inset:0;z-index:9;align-items:center;justify-content:center;padding:28px;text-align:center;color:#52645a;background:linear-gradient(#d3edf7,#f7fbf7 60%,#a9ca69)}
-@media(max-width:760px){.copy{top:32px;max-width:88vw}.tech{display:none}.version{top:14px;right:14px;font-size:8px}.change{top:48px;right:14px;font-size:7px;max-width:70vw}}
+@media(max-width:760px){.copy{top:32px;max-width:88vw}.tech{display:none}.version{top:14px;right:14px;font-size:8px}.change{top:48px;right:14px;font-size:7px;max-width:68vw}}
 </style>
 </head>
 <body>
-<main id="hero" aria-label="v05の草原と同じ風場が、草、空中を舞うもの、空の霞と光を連続して動かし、一部の飛翔体だけが稀に虹色の粒子群へほどける分岐案">
+<main id="hero" aria-label="v05の草原と同じ風場が、草、空中を舞うもの、空の霞と光の濃淡まで連続して動かす分岐案">
   <canvas id="webgl"></canvas>
   <section class="copy">
     <p class="kicker">Architectural Informatics Lab.</p>
     <h1>Wide horizon.<br>Living field.</h1>
     <p class="sub">Yamada Satoshi Lab. / Ritsumeikan University</p>
   </section>
-  <div class="version">BRANCH · v05 meadow × responsive sky × rainbow</div>
-  <div class="change">草 ／ 飛翔体 ／ 空が共有風場に連動 ／ 一部の飛翔体のみ強風時に短く虹色パーティクル化</div>
-  <div class="tech">Three.js · GLSL · shared wind field · branch 04</div>
+  <div class="version">BRANCH · v05 meadow × responsive sky</div>
+  <div class="change">草 ／ 飛翔体 ／ 空の霞・光が同一の風向・gust packet・whirl に連動</div>
+  <div class="tech">Three.js · GLSL · shared wind field · branch 03</div>
   <div id="error">WebGL の初期化に失敗しました。</div>
 </main>
 <script type="module">
@@ -49,9 +49,6 @@ const mobile=matchMedia('(max-width:760px)').matches;
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const MAX_PACKETS=5;
 const MAX_WHIRLS=2;
-const MAX_RAINBOW_CLUSTERS=mobile?1:2;
-const RAINBOW_PARTS=mobile?22:34;
-const RAINBOW_ELIGIBLE_RATE=.10;
 
 let renderer;
 try{renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance',premultipliedAlpha:false});}
@@ -210,27 +207,14 @@ const foregroundGeo=new THREE.PlaneGeometry(120,24,1,1);const foregroundMat=new 
 
 const fragGeom=new THREE.BufferGeometry();fragGeom.setAttribute('position',new THREE.Float32BufferAttribute([-.10,-.035,0,-.032,.24,.014,.11,.052,-.010,-.10,-.035,0,.11,.052,-.010,.022,-.19,.012],3));fragGeom.computeVertexNormals();
 const fragMat=new THREE.MeshBasicMaterial({color:0xf4f0df,transparent:true,opacity:.70,side:THREE.DoubleSide,depthWrite:false});const FRAG_COUNT=mobile?150:280;const fragments=new THREE.InstancedMesh(fragGeom,fragMat,FRAG_COUNT);fragments.instanceMatrix.setUsage(THREE.DynamicDrawUsage);fragments.frustumCulled=false;scene.add(fragments);
-const fragColors=[0xf6f2e5,0xe8eadf,0xdedbc9,0xf0e8d3,0xdce5dd];const dummy=new THREE.Object3D();const fragItems=[];function rand(a,b){return a+Math.random()*(b-a);}function resetFrag(it,initial=false){it.x=rand(-14,14);it.z=initial?rand(6,-72):rand(7,11);it.y=initial?rand(.18,7.8):rand(.12,.75);it.vx=rand(-.18,.18);it.vz=rand(-.4,-.05);it.vy=rand(.0,.12);it.base=rand(.24,.72);it.phase=rand(0,Math.PI*2);it.phase2=rand(0,Math.PI*2);it.spin=rand(-2.0,2.0);it.tumble=rand(.72,1.8);it.age=initial?rand(0,7):0;it.rainbowEligible=Math.random()<RAINBOW_ELIGIBLE_RATE;it.rainbowCooldown=initial?rand(0,7):rand(4,11);it.rainbowing=false;}
+const fragColors=[0xf6f2e5,0xe8eadf,0xdedbc9,0xf0e8d3,0xdce5dd];const dummy=new THREE.Object3D();const fragItems=[];function rand(a,b){return a+Math.random()*(b-a);}function resetFrag(it,initial=false){it.x=rand(-14,14);it.z=initial?rand(6,-72):rand(7,11);it.y=initial?rand(.18,7.8):rand(.12,.75);it.vx=rand(-.18,.18);it.vz=rand(-.4,-.05);it.vy=rand(.0,.12);it.base=rand(.24,.72);it.phase=rand(0,Math.PI*2);it.phase2=rand(0,Math.PI*2);it.spin=rand(-2.0,2.0);it.tumble=rand(.72,1.8);it.age=initial?rand(0,7):0;}
 for(let i=0;i<FRAG_COUNT;i++){const it={};resetFrag(it,true);fragItems.push(it);fragments.setColorAt(i,new THREE.Color(fragColors[(Math.random()*fragColors.length)|0]));}fragments.instanceColor.needsUpdate=true;
 const tmpWind=new THREE.Vector2();const windSample={strength:0,lift:0};
 function sampleWind(x,z,t,out){const b1=.5+.5*Math.sin((x*dirA.x+z*dirA.y)*.086-t*.58);const b2=.5+.5*Math.sin((x*dirB.x+z*dirB.y)*.150-t*.82+.8);const b3=.5+.5*Math.sin((x*dirC.x+z*dirC.y)*.214-t*1.06+1.4);let wx=dirA.x*(.45+.34*b1)+dirB.x*(.18*b2)+dirC.x*(.12*b3);let wz=dirA.y*(.45+.34*b1)+dirB.y*(.18*b2)+dirC.y*(.12*b3);let strength=.30+.40*b1+.20*b2+.13*b3+.18*uniforms.uInterference.value;for(let i=0;i<MAX_PACKETS;i++){const p=packets[i];const dx=(x-p.x)/(p.radius*.95),dz=(z-p.z)/(p.radius*2.25);const core=Math.exp(-(dx*dx+dz*dz)*1.55);const pulse=.12+1.45*Math.pow(Math.max(0,Math.sin(t*(.98+p.speed*.075)+p.phase+i*1.41)),4);const g=core*p.strength*pulse;wx+=p.dirX*g*1.18;wz+=p.dirZ*g*1.18;strength+=g*.85;}let lift=.015+.035*strength;for(let i=0;i<MAX_WHIRLS;i++){const w=whirls[i];if(w.life<0)continue;const dx=x-w.x,dz=z-w.z,dist=Math.hypot(dx,dz),r=Math.max(w.radius,.001);const ring=Math.exp(-Math.pow((dist-r*.55)/(r*.40),2)*2);const g=ring*w.strength;const inv=1/Math.max(dist,.001);const rx=dx*inv,rz=dz*inv;wx+=(-rz*w.spin+rx*.12)*g*1.25;wz+=(rx*w.spin+rz*.12)*g*1.25;strength+=g*.55;lift+=g*.26;}const len=Math.hypot(wx,wz)||1;out.set(wx/len,wz/len);windSample.strength=Math.min(2.2,strength);windSample.lift=lift;return windSample;}
-
-const RAINBOW_TOTAL=MAX_RAINBOW_CLUSTERS*RAINBOW_PARTS;
-const rainbowPositions=new Float32Array(RAINBOW_TOTAL*3);const rainbowColors=new Float32Array(RAINBOW_TOTAL*3);const rainbowAlphas=new Float32Array(RAINBOW_TOTAL);const rainbowSizes=new Float32Array(RAINBOW_TOTAL);const rainbowSeeds=[];
-for(let i=0;i<RAINBOW_TOTAL;i++){rainbowPositions[i*3]=9999;rainbowPositions[i*3+1]=9999;rainbowPositions[i*3+2]=9999;rainbowSeeds.push({angle:rand(0,Math.PI*2),rad:rand(.22,1),height:rand(-1,1),depth:rand(-1,1),hue:Math.random(),phase:rand(0,Math.PI*2),size:rand(.75,1.35)});}
-const rainbowGeo=new THREE.BufferGeometry();rainbowGeo.setAttribute('position',new THREE.BufferAttribute(rainbowPositions,3));rainbowGeo.setAttribute('color',new THREE.BufferAttribute(rainbowColors,3));rainbowGeo.setAttribute('aAlpha',new THREE.BufferAttribute(rainbowAlphas,1));rainbowGeo.setAttribute('aSize',new THREE.BufferAttribute(rainbowSizes,1));
-const rainbowMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,vertexColors:true,vertexShader:`attribute vec3 color;attribute float aAlpha;attribute float aSize;varying vec3 vColor;varying float vAlpha;void main(){vColor=color;vAlpha=aAlpha;vec4 mv=modelViewMatrix*vec4(position,1.0);gl_Position=projectionMatrix*mv;gl_PointSize=clamp(aSize*(185.0/max(1.0,-mv.z)),1.25,7.5);}`,fragmentShader:`precision highp float;varying vec3 vColor;varying float vAlpha;void main(){vec2 q=gl_PointCoord-.5;float r=length(q);float soft=1.0-smoothstep(.16,.5,r);if(soft<.01)discard;gl_FragColor=vec4(vColor,vAlpha*soft);}`});
-const rainbowPoints=new THREE.Points(rainbowGeo,rainbowMat);rainbowPoints.frustumCulled=false;rainbowPoints.renderOrder=4;scene.add(rainbowPoints);
-const rainbowClusters=Array.from({length:MAX_RAINBOW_CLUSTERS},()=>({active:false,owner:-1,x:0,y:0,z:0,vx:0,vy:0,vz:0,life:0,duration:1.6,spread:.5,spin:1,hue:0}));const tmpRainbowWind=new THREE.Vector2();const tmpRainbowColor=new THREE.Color();let nextRainbowTime=3.8+Math.random()*4.8;
-function startRainbow(ownerIndex,it,t){const cl=rainbowClusters.find(c=>!c.active);if(!cl)return false;cl.active=true;cl.owner=ownerIndex;cl.x=it.x;cl.y=it.y;cl.z=it.z;cl.vx=it.vx;cl.vy=Math.max(.04,it.vy);cl.vz=it.vz;cl.life=0;cl.duration=rand(1.25,1.95);cl.spread=rand(.38,.72);cl.spin=Math.random()<.5?-1:1;cl.hue=Math.random();it.rainbowing=true;it.rainbowCooldown=rand(7,15);nextRainbowTime=t+rand(4.2,9.0);return true;}
-function clearRainbowCluster(cl){if(cl.owner>=0&&fragItems[cl.owner]){const it=fragItems[cl.owner];it.rainbowing=false;resetFrag(it,false);it.rainbowCooldown=rand(7,15);}cl.active=false;cl.owner=-1;}
-function updateRainbowClusters(dt,t){const pos=rainbowGeo.attributes.position.array,col=rainbowGeo.attributes.color.array,alp=rainbowGeo.attributes.aAlpha.array,siz=rainbowGeo.attributes.aSize.array;const motion=reduced?.18:1;for(let c=0;c<MAX_RAINBOW_CLUSTERS;c++){const cl=rainbowClusters[c];if(cl.active){cl.life+=dt;const wind=sampleWind(cl.x,cl.z,t,tmpRainbowWind);const inertia=Math.min(1,dt*(1.9+wind.strength*1.4));const targetSpeed=1.8+wind.strength*3.7;cl.vx+=(tmpRainbowWind.x*targetSpeed-cl.vx)*inertia;cl.vz+=(tmpRainbowWind.y*targetSpeed-cl.vz)*inertia;cl.vy+=(wind.lift*.78+.025-cl.vy*.22)*dt;cl.x+=cl.vx*dt*motion;cl.z+=cl.vz*dt*motion;cl.y+=cl.vy*dt*motion;if(cl.life>=cl.duration||cl.z<-96||Math.abs(cl.x)>45||cl.y>13.5)clearRainbowCluster(cl);}for(let p=0;p<RAINBOW_PARTS;p++){const i=c*RAINBOW_PARTS+p,o=i*3;if(!cl.active){pos[o]=9999;pos[o+1]=9999;pos[o+2]=9999;alp[i]=0;siz[i]=0;continue;}const seed=rainbowSeeds[i],u=cl.life/cl.duration,fadeIn=Math.min(1,cl.life/.18),fadeOut=Math.min(1,(cl.duration-cl.life)/.42),fade=Math.max(0,Math.min(fadeIn,fadeOut));const radius=(.045+cl.spread*u)*seed.rad;const angle=seed.angle+cl.spin*cl.life*(1.15+.55*seed.rad)+Math.sin(t*.72+seed.phase)*.18;const tail=.08+u*.46;pos[o]=cl.x+Math.cos(angle)*radius-tmpRainbowWind.x*seed.rad*tail;pos[o+1]=cl.y+Math.sin(angle*1.31)*radius*.72+seed.height*radius*.34+Math.sin(t*1.7+seed.phase)*.025;pos[o+2]=cl.z+Math.sin(angle*.73+seed.phase)*radius*.48+seed.depth*radius*.24-tmpRainbowWind.y*seed.rad*tail;const hue=(cl.hue+seed.hue*.88+t*.018)%1;tmpRainbowColor.setHSL(hue,.72,.66);col[o]=tmpRainbowColor.r;col[o+1]=tmpRainbowColor.g;col[o+2]=tmpRainbowColor.b;alp[i]=fade*(.50+.34*seed.rad);siz[i]=(mobile?2.5:3.1)*seed.size*(.82+.22*Math.sin(seed.phase+t*1.2));}}
-rainbowGeo.attributes.position.needsUpdate=true;rainbowGeo.attributes.color.needsUpdate=true;rainbowGeo.attributes.aAlpha.needsUpdate=true;rainbowGeo.attributes.aSize.needsUpdate=true;}
-
-function updateFragments(dt,t){const motion=reduced?.20:1;let rainbowStarted=false;for(let i=0;i<FRAG_COUNT;i++){const it=fragItems[i];if(it.rainbowing){dummy.position.set(9999,9999,9999);dummy.scale.setScalar(0);dummy.updateMatrix();fragments.setMatrixAt(i,dummy.matrix);continue;}const wind=sampleWind(it.x,it.z,t,tmpWind);it.rainbowCooldown-=dt;const inertia=Math.min(1,dt*(1.7+wind.strength*1.5));const targetSpeed=1.5+wind.strength*3.4;it.vx+=(tmpWind.x*targetSpeed-it.vx)*inertia;it.vz+=(tmpWind.y*targetSpeed-it.vz)*inertia;const flutterLift=Math.sin(t*1.6+it.phase)*.035+Math.sin(t*.63+it.phase2)*.022;it.vy+=(wind.lift+flutterLift-it.vy*.28)*dt;it.x+=it.vx*dt*motion;it.z+=it.vz*dt*motion;it.y+=it.vy*dt*motion;it.age+=dt;if(it.z<-94||it.z>12||Math.abs(it.x)>42||it.y>13.0||it.y<-.15||it.age>24){resetFrag(it,false);continue;}if(!reduced&&!rainbowStarted&&t>=nextRainbowTime&&it.rainbowEligible&&it.rainbowCooldown<=0&&it.age>.8&&it.y>.30&&it.y<9.2&&wind.strength>1.02&&Math.random()<dt*.90){rainbowStarted=startRainbow(i,it,t);if(rainbowStarted){dummy.position.set(9999,9999,9999);dummy.scale.setScalar(0);dummy.updateMatrix();fragments.setMatrixAt(i,dummy.matrix);continue;}}const flutter=Math.sin(t*it.tumble*2.25+it.phase);dummy.position.set(it.x,it.y,it.z);dummy.rotation.set(Math.sin(t*.72+it.phase2)*.72,t*it.spin*.53+it.phase,flutter*1.05+Math.sin(t*.39+it.phase2)*.28);const s=it.base*(.92+.10*flutter);dummy.scale.set(s*(.70+.18*Math.sin(it.phase2)),s*(1.08+.16*Math.sin(it.phase)),1);dummy.updateMatrix();fragments.setMatrixAt(i,dummy.matrix);}fragments.instanceMatrix.needsUpdate=true;}
+function updateFragments(dt,t){const motion=reduced?.20:1;for(let i=0;i<FRAG_COUNT;i++){const it=fragItems[i];const wind=sampleWind(it.x,it.z,t,tmpWind);const inertia=Math.min(1,dt*(1.7+wind.strength*1.5));const targetSpeed=1.5+wind.strength*3.4;it.vx+=(tmpWind.x*targetSpeed-it.vx)*inertia;it.vz+=(tmpWind.y*targetSpeed-it.vz)*inertia;const flutterLift=Math.sin(t*1.6+it.phase)*.035+Math.sin(t*.63+it.phase2)*.022;it.vy+=(wind.lift+flutterLift-it.vy*.28)*dt;it.x+=it.vx*dt*motion;it.z+=it.vz*dt*motion;it.y+=it.vy*dt*motion;it.age+=dt;if(it.z<-94||it.z>12||Math.abs(it.x)>42||it.y>13.0||it.y<-.15||it.age>24)resetFrag(it,false);const flutter=Math.sin(t*it.tumble*2.25+it.phase);dummy.position.set(it.x,it.y,it.z);dummy.rotation.set(Math.sin(t*.72+it.phase2)*.72,t*it.spin*.53+it.phase,flutter*1.05+Math.sin(t*.39+it.phase2)*.28);const s=it.base*(.92+.10*flutter);dummy.scale.set(s*(.70+.18*Math.sin(it.phase2)),s*(1.08+.16*Math.sin(it.phase)),1);dummy.updateMatrix();fragments.setMatrixAt(i,dummy.matrix);}fragments.instanceMatrix.needsUpdate=true;}
 
 function resize(){const w=hero.clientWidth,h=hero.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}addEventListener('resize',resize,{passive:true});resize();
-const clock=new THREE.Clock();let elapsed=0;renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);elapsed+=dt;uniforms.uTime.value=elapsed;updateLayerDirections(elapsed);updateInterference(dt,elapsed);updatePackets(dt,elapsed);updateWhirls(dt,elapsed);updateFragments(dt,elapsed);updateRainbowClusters(dt,elapsed);renderer.render(scene,camera);});
+const clock=new THREE.Clock();let elapsed=0;renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);elapsed+=dt;uniforms.uTime.value=elapsed;updateLayerDirections(elapsed);updateInterference(dt,elapsed);updatePackets(dt,elapsed);updateWhirls(dt,elapsed);updateFragments(dt,elapsed);renderer.render(scene,camera);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)clock.getDelta();});
 </script>
 </body>
