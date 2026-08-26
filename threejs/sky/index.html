@@ -6,14 +6,14 @@
 <title>Living Field — version router</title>
 <script>
 (()=>{
-  const raw=new URLSearchParams(location.search).get('v')||'10';
+  const raw=new URLSearchParams(location.search).get('v')||'11';
   const v=raw.replace(/^v/i,'').padStart(2,'0');
-  const target=v==='03'?'v03/':(v==='05'?'v05/':(v==='06'?'v06/':(v==='07'?'v07/':(v==='08'?'v08/':(v==='09'?'v09/':'v10/')))));
+  const target=v==='03'?'v03/':(v==='05'?'v05/':(v==='06'?'v06/':(v==='07'?'v07/':(v==='08'?'v08/':(v==='09'?'v09/':(v==='10'?'v10/':'v11/'))))));
   location.replace(new URL(target,location.href).href);
 })();
 </script>
 </head>
 <body>
-<p><a href="v10/">Living Field v10</a> / <a href="v09/">Living Field v09</a> / <a href="v08/">Living Field v08</a> / <a href="v07/">Living Field v07</a> / <a href="v06/">Living Field v06</a> / <a href="v05/">Living Field v05</a> / <a href="v03/">Living Field v03</a></p>
+<p><a href="v11/">Living Field v11</a> / <a href="v10/">Living Field v10</a> / <a href="v09/">Living Field v09</a> / <a href="v08/">Living Field v08</a> / <a href="v07/">Living Field v07</a> / <a href="v06/">Living Field v06</a> / <a href="v05/">Living Field v05</a> / <a href="v03/">Living Field v03</a></p>
 </body>
 </html>
