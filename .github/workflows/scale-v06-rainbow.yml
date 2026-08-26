@@ -1,0 +1,59 @@
+name: Scale v06 rainbow particles
+on:
+  push:
+    paths:
+      - '.github/workflows/scale-v06-rainbow.yml'
+permissions:
+  contents: write
+jobs:
+  scale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Triple rainbow particle display size
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('threejs/sky/v06/index.html')
+          s=p.read_text()
+          if 'rainbow particle size ×3' in s:
+              raise SystemExit('already scaled')
+
+          changed=False
+          # Shader-based point rendering: multiply the final point size, preserving perspective and clamps.
+          if 'gl_PointSize=' in s:
+              s2,n=re.subn(r'gl_PointSize\s*=\s*(?!3\.0\*)([^;]+);', r'gl_PointSize=3.0*(\1);', s, count=1)
+              if n:
+                  s=s2; changed=True
+
+          # PointsMaterial fallback: multiply only the explicit size property in the rainbow material region.
+          if not changed:
+              idx=s.lower().find('rainbow')
+              if idx>=0:
+                  tail=s[idx:]
+                  m=re.search(r'\bsize\s*:\s*([^,}\n]+)', tail)
+                  if m:
+                      old=m.group(0)
+                      expr=m.group(1).strip()
+                      tail=tail[:m.start()]+f'size:3.0*({expr})'+tail[m.end():]
+                      s=s[:idx]+tail
+                      changed=True
+
+          if not changed:
+              raise SystemExit('Could not locate rainbow particle size expression')
+
+          s=s.replace('v05を基礎に発展 ／ 虹色パーティクルクラスタを少し増量し、共有風場の強い地点でより時々見えるよう調整','v05を基礎に発展 ／ 虹色パーティクルクラスタを少し増量 ／ rainbow particle size ×3')
+          p.write_text(s)
+          PY
+      - name: Commit size change
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Satoshi Yamada'
+          git config user.email 'satoshi.bon@gmail.com'
+          git add threejs/sky/v06/index.html
+          git commit -m 'Scale v06 rainbow particles to about 3x size'
+          git push
